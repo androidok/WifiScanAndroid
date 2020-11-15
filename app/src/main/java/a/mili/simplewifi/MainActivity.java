@@ -76,7 +76,11 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             mAccessPoints = mWifiManager.getScanResults();
             logToUi(mAccessPoints.size() + " APs discovered.");
-            mInfoTextView.setText(mAccessPoints.get(0).toString());
+            mInfoTextView.setText(
+                    "SSID: " + mAccessPoints.get(0).SSID + "\n"
+                            + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
+                            + "RSSI: " + mAccessPoints.get(0).level + " dBm\n"
+            );
         }
     }
 
