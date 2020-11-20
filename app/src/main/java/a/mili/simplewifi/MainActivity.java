@@ -45,11 +45,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mInfoTextView = findViewById(R.id.access_point_information_text_view);
+//        mInfoTextView = findViewById(R.id.access_point_information_text_view);
 
         ActivityCompat.requestPermissions(
                 this,
-                new String[] {Manifest.permission.ACCESS_FINE_LOCATION},
+                new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 REQUEST_PERMISSION_CODE);
 
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -76,11 +77,12 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             mAccessPoints = mWifiManager.getScanResults();
             logToUi(mAccessPoints.size() + " APs discovered.");
-            mInfoTextView.setText(
-                    "SSID: " + mAccessPoints.get(0).SSID + "\n"
-                            + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
-                            + "RSSI: " + mAccessPoints.get(0).level + " dBm\n"
-            );
+//            mInfoTextView.setText(
+//
+//                    "SSID: " + mAccessPoints.get(0).SSID + "\n"
+//                            + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
+//                            + "RSSI: " + mAccessPoints.get(0).level + " dBm\n"
+//            );
         }
     }
 
