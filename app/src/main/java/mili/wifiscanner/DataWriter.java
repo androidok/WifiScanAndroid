@@ -47,7 +47,7 @@ public class DataWriter {
     }
 
     private static String getTimeStamp() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         Date curDate = new Date(System.currentTimeMillis());
         return formatter.format(curDate);
     }
@@ -55,7 +55,14 @@ public class DataWriter {
     public void writeToFiles(int roomId, List<ScanResult> results) {
         try {
             Log.i(TAG, "Write to " + mFilePath);
-            Files.write(mFilePath, getTimeStamp().getBytes(), StandardOpenOption.APPEND);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("room " + roomId + " " + getTimeStamp());
+            stringBuilder.append("\n                BSSID  RSSI\n");
+            for (int i = 0; i<results.size(); i++) {
+                stringBuilder.append(i + " " + results.get(i).BSSID + " " + results.get(i).level + "\n");
+            }
+            stringBuilder.append("\n");
+            Files.write(mFilePath, stringBuilder.toString().getBytes(), StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
         }
