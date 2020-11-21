@@ -1,5 +1,9 @@
-package a.mili.simplewifi;
+package mili.wifiscanner;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -9,25 +13,24 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSION_CODE = 2;
-
+    private Handler mHandler;
+    private Runnable mRunnable;
     private TextView mOutputTextView;
     private RecyclerView mRecyclerView;
-    private MyAdapter mAdapter;
+    private ScanAdapter mAdapter;
 
+    int delay = 5000; // 1000 milliseconds == 1 second
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
     List<ScanResult> mAccessPoints;
@@ -42,25 +45,43 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 logToUi(getString(R.string.retrieving_access_points));
-                mWifiManager.startScan();
+                startWifiScanner();
             }
         });
 
         ActivityCompat.requestPermissions(
                 this,
                 new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 REQUEST_PERMISSION_CODE);
 
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         mWifiScanReceiver = new WifiScanReceiver();
 
-        mAccessPoints = mWifiManager.getScanResults();
+        mAccessPoints = new ArrayList<>();
+        mAdapter = new ScanAdapter(mAccessPoints);
+
         mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
-        mAdapter = new MyAdapter(mAccessPoints);
+        mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+
+
+        mHandler = new Handler();
+        mRunnable = new Runnable() {
+            public void run() {
+                mWifiManager.startScan();
+            }
+        };
     }
 
+    private void startWifiScanner() {
+        mHandler.postDelayed(mRunnable, delay);
+    }
+
+    void stopWifiScanner() {
+        mHandler.removeCallbacks(mRunnable);
+    }
     @Override
     protected void onResume() {
         Log.d(TAG, "onResume()");
@@ -82,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
             mAccessPoints = mWifiManager.getScanResults();
             mAdapter.swapData(mAccessPoints);
             mAdapter.notifyDataSetChanged();
-            logToUi(mAccessPoints.size() + " APs discovered.");
         }
     }
 

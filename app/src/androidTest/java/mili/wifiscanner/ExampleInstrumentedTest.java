@@ -1,4 +1,4 @@
-package a.mili.simplewifi;
+package mili.wifiscanner;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("a.mili.simplewifi", appContext.getPackageName());
+        assertEquals("mili.recyclerview", appContext.getPackageName());
     }
 }

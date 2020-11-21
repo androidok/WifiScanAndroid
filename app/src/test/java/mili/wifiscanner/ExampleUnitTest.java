@@ -1,4 +1,4 @@
-package a.mili.simplewifi;
+package mili.wifiscanner;
 
 import org.junit.Test;
 

@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:padding="@dimen/recycler_row_padding"
-    android:orientation="horizontal">
+    android:padding="@dimen/recycler_row_padding" >
 
     <TextView
         android:id="@+id/bssid_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:textAlignment="center"
         android:text="@string/recycler_row_header_label_bssid"
+        android:textAlignment="center"
         android:textSize="@dimen/recycler_row_item_text_size" />
+
     <TextView
         android:id="@+id/rssi_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:textAlignment="center"
         android:text="@string/recycler_row_header_label_rssi"
+        android:textAlignment="center"
         android:textSize="@dimen/recycler_row_item_text_size" />
 </LinearLayout>
