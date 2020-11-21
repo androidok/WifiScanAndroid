@@ -22,7 +22,7 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ViewHolder> {
             localDataSet.addAll(results);
         }
         notifyDataSetChanged();
-        Log.d(TAG, getItemCount() + " APs discovered.");
+        Log.d(TAG, localDataSet.size() + " APs discovered.");
 //        String info = "First AP\nSSID: " + mAccessPoints.get(0).SSID + "\n"
 //                + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
 //                + "RSSI: " + mAccessPoints.get(0).level + " dBm\n";
@@ -76,8 +76,7 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ViewHolder> {
     // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        Log.d(TAG, "Element " + position + " set.");
-        // Get element from your dataset at this position and replace the
+        // Get element from the dataset at this position and replace the
         // contents of the view with that element
         if (position > 0) {
             ScanResult result = localDataSet.get(position-1);
@@ -87,7 +86,7 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ViewHolder> {
             viewHolder.getmBSSIDTextView().setText(R.string.recycler_row_header_label_bssid);
             viewHolder.getmRSSITextView().setText(R.string.recycler_row_header_label_rssi);
         }
-
+        // Log.d(TAG, "Element " + position + " set.");
     }
 
     // Return the size of your dataset (invoked by the layout manager)

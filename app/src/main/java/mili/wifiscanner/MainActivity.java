@@ -30,10 +30,17 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private ScanAdapter mAdapter;
 
-    int delay = 5000; // 1000 milliseconds == 1 second
+    int delay = 30000; // 1000 milliseconds == 1 second
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
     List<ScanResult> mAccessPoints;
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("myViewTag", (int) mOutputTextView.getTag());
+        outState.putCharSequence("MyViewText", mOutputTextView.getText());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,11 +48,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mOutputTextView = findViewById(R.id.access_point_summary_text_view);
+        mOutputTextView.setTag(1);
         mOutputTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                logToUi(getString(R.string.retrieving_access_points));
-                startWifiScanner();
+                final int status =(Integer) v.getTag();
+                if(status == 1) {
+
+                    v.setTag(0); //pause
+                    Log.i(TAG, v.getTag() + ": start scanning...");
+                    logToUi(getString(R.string.retrieving_access_points));
+                    mWifiManager.startScan();
+                    startWifiScanner();
+
+                } else {
+
+                    v.setTag(1);
+                    Log.i(TAG, v.getTag() + ": stop scanning...");
+                    logToUi(getString(R.string.click_info));
+                    stopWifiScanner();
+                }
+
             }
         });
 
@@ -70,7 +93,10 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new Handler();
         mRunnable = new Runnable() {
             public void run() {
+                Log.i(TAG, "scan once...");
+                logToUi(getString(R.string.retrieving_access_points));
                 mWifiManager.startScan();
+                mHandler.postDelayed(mRunnable, delay);
             }
         };
     }
@@ -80,8 +106,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void stopWifiScanner() {
-        mHandler.removeCallbacks(mRunnable);
+        mHandler.removeCallbacks(null);
+        Log.i(TAG, "Scan stopped");
     }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mOutputTextView.setText(savedInstanceState.getCharSequence("MyViewText"));
+        mOutputTextView.setTag("MyViewTag");
+    }
+
     @Override
     protected void onResume() {
         Log.d(TAG, "onResume()");
@@ -103,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
             mAccessPoints = mWifiManager.getScanResults();
             mAdapter.swapData(mAccessPoints);
             mAdapter.notifyDataSetChanged();
+            logToUi(mAccessPoints.size() + " APs discovered.");
         }
     }
 
