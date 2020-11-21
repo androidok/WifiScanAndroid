@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SimpleWifi.iml" filepath="$PROJECT_DIR$/.idea/modules/SimpleWifi.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SimpleWifi.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SimpleWifi.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/RecyclerView.iml" filepath="$PROJECT_DIR$/.idea/modules/RecyclerView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/RecyclerView.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/RecyclerView.app.iml" />
     </modules>
   </component>
 </project>

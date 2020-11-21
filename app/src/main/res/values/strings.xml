@@ -4,4 +4,8 @@
     <string name="retrieving_access_points">Retrieving Access Points&#8230;</string>
     <string name="recycler_row_header_label_bssid">BSSID</string>
     <string name="recycler_row_header_label_rssi">RSSI</string>
+    <string name="switch_type">DataType</string>
+    <string name="switch_train">Train</string>
+    <string name="switch_test">Test</string>
+    <string name="location_toggle_text">Location ID</string>
 </resources>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:padding="@dimen/recycler_row_padding" >
+    android:padding="@dimen/default_padding" >
 
     <TextView
         android:id="@+id/bssid_text_view"
@@ -11,8 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="@string/recycler_row_header_label_bssid"
-        android:textAlignment="center"
-        android:textSize="@dimen/recycler_row_item_text_size" />
+        android:textAlignment="center"/>
 
     <TextView
         android:id="@+id/rssi_text_view"
@@ -20,6 +19,5 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="@string/recycler_row_header_label_rssi"
-        android:textAlignment="center"
-        android:textSize="@dimen/recycler_row_item_text_size" />
+        android:textAlignment="center"/>
 </LinearLayout>
