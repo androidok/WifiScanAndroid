@@ -10,9 +10,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -24,17 +26,24 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSION_CODE = 2;
-    private Handler mHandler;
-    private Runnable mRunnable;
+
     private TextView mOutputTextView;
     private RecyclerView mRecyclerView;
     private ScanAdapter mAdapter;
-    private boolean mScanStarted = false;
+    private String mDataType = "train";
+    private int mRoomID = 0;
 
-    int delay = 30000; // 1000 milliseconds == 1 second
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
     List<ScanResult> mAccessPoints;
+
+    private Handler mHandler;
+    private Runnable mRunnable;
+    private int mDelay = 30000; // 1000 milliseconds == 1 second
+    private boolean mScanStarted = false;
+
+    private DataWriter mDataWriter;
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -46,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         mOutputTextView = findViewById(R.id.access_point_summary_text_view);
         mOutputTextView.setOnClickListener(new View.OnClickListener() {
@@ -81,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 
-
         mHandler = new Handler();
         mRunnable = new Runnable() {
             public void run() {
@@ -89,12 +98,14 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "scan once...");
                     logToUi(getString(R.string.retrieving_access_points));
                     mWifiManager.startScan();
-                    mHandler.postDelayed(this, delay);
+                    mHandler.postDelayed(this, mDelay);
                 } else {
                     stopWifiScanner();
                 }
             }
         };
+
+        mDataWriter = new DataWriter(mDataType, getString(R.string.app_name));
     }
 
     private void startWifiScanner() {
@@ -137,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 mAdapter.swapData(mAccessPoints);
                 mAdapter.notifyDataSetChanged();
                 logToUi(mAccessPoints.size() + " APs discovered.");
+                mDataWriter.writeToFiles(mRoomID, mAccessPoints);
             }
         }
     }
