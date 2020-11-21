@@ -1,9 +1,5 @@
 package a.mili.simplewifi;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -17,7 +13,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,8 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView mOutputTextView;
     private RecyclerView mRecyclerView;
-    private ScanAdapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private MyAdapter mAdapter;
 
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
@@ -56,12 +55,10 @@ public class MainActivity extends AppCompatActivity {
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         mWifiScanReceiver = new WifiScanReceiver();
 
-        mAccessPoints = new ArrayList<>();
-
+        mAccessPoints = mWifiManager.getScanResults();
         mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
-        mAdapter = new ScanAdapter(mAccessPoints);
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new MyAdapter(mAccessPoints);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override
@@ -84,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             mAccessPoints = mWifiManager.getScanResults();
             mAdapter.swapData(mAccessPoints);
+            mAdapter.notifyDataSetChanged();
             logToUi(mAccessPoints.size() + " APs discovered.");
         }
     }

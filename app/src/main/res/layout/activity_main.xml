@@ -15,10 +15,11 @@
         android:layout_marginTop="16dp"
         android:text="Click here to scan wifi"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@id/access_point_information_recycler_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/access_point_information_recycler_view"
@@ -29,5 +30,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

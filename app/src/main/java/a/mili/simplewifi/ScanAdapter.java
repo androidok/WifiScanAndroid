@@ -7,12 +7,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
+public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder>{
     private static final String TAG = "ScanAdapter";
     private List<ScanResult> mAccessPoints;
 
@@ -23,22 +24,18 @@ public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ScanViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.recycler_layout, parent, false);
-        return new ViewHolder(v);
+        return new ScanViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ScanViewHolder holder, int position) {
         Log.d(TAG, "Element " + position + " set.");
-//        String info = "BSSID: " + mAccessPoints.get(position).BSSID + "\t"
-//                + "RSSI: " + mAccessPoints.get(position).level + " dBm";
-//        String info = "SSID: " + mAccessPoints.get(0).SSID + "\n"
-//                + "BSSID: " + mAccessPoints.get(position).BSSID + "\n"
-//                + "RSSI: " + mAccessPoints.get(position).level + " dBm\n";
-        holder.mBSSIDTextView.setText(mAccessPoints.get(position).BSSID);
-        holder.mRSSITextView.setText(mAccessPoints.get(position).level);
+        ScanResult currentScanResult = mAccessPoints.get(position);
+        holder.mBSSIDTextView.setText(currentScanResult.BSSID);
+        holder.mRSSITextView.setText(currentScanResult.level + " dBm");
     }
 
     @Override
@@ -52,19 +49,22 @@ public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
         if ((results != null) && (results.size() > 0)) {
             mAccessPoints.addAll(results);
         }
-
         notifyDataSetChanged();
+        Log.d(TAG, getItemCount() + " APs discovered.");
+        String info = "First AP\nSSID: " + mAccessPoints.get(0).SSID + "\n"
+                + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
+                + "RSSI: " + mAccessPoints.get(0).level + " dBm\n";
+        Log.d(TAG, info);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mRSSITextView;
+    public class ScanViewHolder extends RecyclerView.ViewHolder {
         public TextView mBSSIDTextView;
+        public TextView mRSSITextView;
 
-        public ViewHolder(@NonNull View itemView) {
+        public ScanViewHolder(@NonNull View itemView) {
             super(itemView);
-            mRSSITextView = itemView.findViewById(R.id.rssi_text_view);
             mBSSIDTextView = itemView.findViewById(R.id.bssid_text_view);
+            mRSSITextView = itemView.findViewById(R.id.rssi_text_view);
         }
-
     }
 }
