@@ -1,31 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:padding="@dimen/recycler_row_padding"
+    android:paddingTop="@dimen/recycler_row_padding"
+    android:paddingBottom="@dimen/recycler_row_padding"
     android:orientation="horizontal">
 
     <TextView
-        android:id="@+id/bssid_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:textAlignment="center"
+        android:textSize="@dimen/recycler_row_header_text_size"
         android:text="@string/recycler_row_header_label_bssid"
-        android:textSize="@dimen/recycler_row_item_text_size"
-        tools:ignore="RtlCompat" />
+        android:id="@+id/ssid_text_view"/>
+
     <TextView
-        android:id="@+id/rssi_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:textAlignment="center"
         android:text="@string/recycler_row_header_label_rssi"
-        android:textSize="@dimen/recycler_row_item_text_size"
-        tools:ignore="RtlCompat" />
+        android:textSize="@dimen/recycler_row_header_text_size"
+        android:id="@+id/bssid_text_view"/>
 </LinearLayout>

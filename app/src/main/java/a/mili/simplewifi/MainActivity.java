@@ -2,13 +2,14 @@ package a.mili.simplewifi;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -16,20 +17,21 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSION_CODE = 2;
 
-    List<ScanResult> mAccessPoints;
+    private TextView mOutputTextView;
+    private RecyclerView mRecyclerView;
+    private ScanAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
-
-    private TextView mOutputTextView;
-    private TextView mInfoTextView;
-
+    List<ScanResult> mAccessPoints;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +47,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        mInfoTextView = findViewById(R.id.access_point_information_text_view);
-
         ActivityCompat.requestPermissions(
                 this,
                 new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
@@ -55,6 +55,13 @@ public class MainActivity extends AppCompatActivity {
 
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         mWifiScanReceiver = new WifiScanReceiver();
+
+        mAccessPoints = new ArrayList<>();
+
+        mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
+        mAdapter = new ScanAdapter(mAccessPoints);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
     }
 
     @Override
@@ -76,13 +83,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             mAccessPoints = mWifiManager.getScanResults();
+            mAdapter.swapData(mAccessPoints);
             logToUi(mAccessPoints.size() + " APs discovered.");
-//            mInfoTextView.setText(
-//
-//                    "SSID: " + mAccessPoints.get(0).SSID + "\n"
-//                            + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
-//                            + "RSSI: " + mAccessPoints.get(0).level + " dBm\n"
-//            );
         }
     }
 

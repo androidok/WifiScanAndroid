@@ -15,7 +15,6 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:textAlignment="center"
-        android:text="@string/recycler_row_header_label_bssid"
         android:textSize="@dimen/recycler_row_item_text_size"
         tools:ignore="RtlCompat" />
     <TextView
@@ -25,7 +24,6 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:textAlignment="center"
-        android:text="@string/recycler_row_header_label_rssi"
         android:textSize="@dimen/recycler_row_item_text_size"
         tools:ignore="RtlCompat" />
 </LinearLayout>

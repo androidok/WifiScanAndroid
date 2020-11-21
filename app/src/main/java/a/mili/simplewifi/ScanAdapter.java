@@ -1,6 +1,5 @@
 package a.mili.simplewifi;
 
-import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,8 +14,12 @@ import java.util.List;
 
 public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
     private static final String TAG = "ScanAdapter";
-    List<ScanResult> mAccessPoints;
+    private List<ScanResult> mAccessPoints;
 
+    public ScanAdapter(List<ScanResult> results) {
+        mAccessPoints = results;
+        Log.d(TAG, getItemCount() + " APs discovered.");
+    }
 
     @NonNull
     @Override
@@ -28,12 +31,14 @@ public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String info = "BSSID: " + mAccessPoints.get(position).BSSID + "\t"
-                + "RSSI: " + mAccessPoints.get(position).level + " dBm";
+        Log.d(TAG, "Element " + position + " set.");
+//        String info = "BSSID: " + mAccessPoints.get(position).BSSID + "\t"
+//                + "RSSI: " + mAccessPoints.get(position).level + " dBm";
 //        String info = "SSID: " + mAccessPoints.get(0).SSID + "\n"
 //                + "BSSID: " + mAccessPoints.get(position).BSSID + "\n"
 //                + "RSSI: " + mAccessPoints.get(position).level + " dBm\n";
-        holder.getTextView().setText(info);
+        holder.mBSSIDTextView.setText(mAccessPoints.get(position).BSSID);
+        holder.mRSSITextView.setText(mAccessPoints.get(position).level);
     }
 
     @Override
@@ -41,16 +46,25 @@ public class ScanAdapter  extends RecyclerView.Adapter<ScanAdapter.ViewHolder>{
         return mAccessPoints.size();
     }
 
+    public void swapData(List<ScanResult> results) {
+        mAccessPoints.clear();
+
+        if ((results != null) && (results.size() > 0)) {
+            mAccessPoints.addAll(results);
+        }
+
+        notifyDataSetChanged();
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView textView;
+        public TextView mRSSITextView;
+        public TextView mBSSIDTextView;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.textView);
+            mRSSITextView = itemView.findViewById(R.id.rssi_text_view);
+            mBSSIDTextView = itemView.findViewById(R.id.bssid_text_view);
         }
 
-        public TextView getTextView() {
-            return textView;
-        }
     }
 }
