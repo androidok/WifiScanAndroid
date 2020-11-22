@@ -26,7 +26,6 @@ public class DataWriter {
         String fileName = type + getDateUnderLine() + ".txt";
         String filePath = rootPath.toString() + "/" + fileName;
         try {
-            Log.d(TAG, "Create " + filePath);
             Files.createDirectories(rootPath);
             File file = new File(filePath);
             file.createNewFile();
@@ -68,4 +67,10 @@ public class DataWriter {
         }
     }
 
+    public String info() {
+        String info = "Data will be stored in " + mFilePath;
+        info = info.replace(Environment.getExternalStorageDirectory().getPath(), "");
+        Log.d(TAG, info);
+        return info;
+    }
 }

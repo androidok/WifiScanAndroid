@@ -82,11 +82,11 @@
         </com.google.android.material.chip.ChipGroup>
 
         <TextView
-            android:id="@+id/access_point_summary_text_view"
+            android:id="@+id/scan_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/activity_text_view_margin"
-            android:text="@string/click_info"
+            android:text="@string/start_scan_info"
             android:textSize="@dimen/activity_text_size" />
 
         <androidx.recyclerview.widget.RecyclerView

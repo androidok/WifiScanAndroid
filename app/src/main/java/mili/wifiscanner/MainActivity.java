@@ -1,28 +1,26 @@
 package mili.wifiscanner;
 
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
-import android.media.audiofx.AudioEffect;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
@@ -35,12 +33,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSION_CODE = 2;
 
-    private TextView mOutputTextView;
+    private TextView mScanTextView;
     private RecyclerView mRecyclerView;
     private ScanAdapter mAdapter;
     private MaterialButtonToggleGroup mTypeToggle;
     private ChipGroup mRoomToggle;
-    private static CharSequence mDataType = "train";
+    private static CharSequence mDataType = "unknown";
     private static int mRoomNum = 4;
     private static CharSequence mRoomID = "unknown";
 
@@ -59,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putCharSequence("MyViewText", mOutputTextView.getText());
+        outState.putCharSequence("MyViewText", mScanTextView.getText());
     }
 
     @Override
@@ -67,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mOutputTextView = findViewById(R.id.access_point_summary_text_view);
-        mOutputTextView.setOnClickListener(new View.OnClickListener() {
+        mScanTextView = findViewById(R.id.scan_text_view);
+        mScanTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(!mScanStarted) {
@@ -85,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mTypeToggle = findViewById(R.id.type_toggle);
+        mTypeToggle.check(R.id.train_button);
         mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
             @Override
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
@@ -137,23 +136,46 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+
     }
 
     private void startWifiScanner() {
-        mDataWriter = new DataWriter(mDataType, getString(R.string.app_name));
-        mHandler.post(mRunnable);
+        if (mRoomToggle.getCheckedChipId() == ChipGroup.NO_ID) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setMessage(R.string.start_warning)
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            });
+            mScanTextView.callOnClick();
+        } else {
+            mDataWriter = new DataWriter(mDataType, getString(R.string.app_name));
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setMessage(mDataWriter.info())
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            });
+            mHandler.post(mRunnable);
+        }
     }
 
     void stopWifiScanner() {
         mHandler.removeCallbacks(null);
-        logToUi(getString(R.string.click_info));
+        logToUi(getString(R.string.start_scan_info));
         Log.d(TAG, "Scan stopped");
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mOutputTextView.setText(savedInstanceState.getCharSequence("MyViewText"));
+        mScanTextView.setText(savedInstanceState.getCharSequence("MyViewText"));
     }
 
     @Override
@@ -179,24 +201,20 @@ public class MainActivity extends AppCompatActivity {
                 mAccessPoints = mWifiManager.getScanResults();
                 mAdapter.swapData(mAccessPoints);
                 mAdapter.notifyDataSetChanged();
-                logToUi(mAccessPoints.size() + " APs discovered.");
+                logToUi( getString(R.string.stop_scan_info)
+                        + "\n" + mAccessPoints.size()
+                        + " APs discovered.\nCurrent scan delay: "
+                        + (mDelay/1000) + "s"
+                );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
             }
-        }
-    }
-
-    class ToggleButtonClick implements View.OnClickListener {
-
-        @Override
-        public void onClick(View v) {
-            v.playSoundEffect(AudioEffect.SUCCESS);
         }
     }
 
     private void logToUi(final String message) {
         if (!message.isEmpty()) {
             Log.d(TAG, message);
-            mOutputTextView.setText(message);
+            mScanTextView.setText(message);
         }
     }
 
