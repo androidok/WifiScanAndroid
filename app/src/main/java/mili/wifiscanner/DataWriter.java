@@ -21,12 +21,12 @@ public class DataWriter {
     private static String TAG = "DataWriter";
     private static Path mFilePath;
 
-    public DataWriter(String type, String folderName) {
+    public DataWriter(CharSequence type, String folderName) {
         Path rootPath = getRootPath(folderName);
         String fileName = type + getDateUnderLine() + ".txt";
         String filePath = rootPath.toString() + "/" + fileName;
         try {
-            Log.i(TAG, "Write to " + filePath);
+            Log.d(TAG, "Create " + filePath);
             Files.createDirectories(rootPath);
             File file = new File(filePath);
             file.createNewFile();
@@ -52,9 +52,9 @@ public class DataWriter {
         return formatter.format(curDate);
     }
 
-    public void writeToFiles(int roomId, List<ScanResult> results) {
+    public void writeToFiles(CharSequence roomId, List<ScanResult> results) {
         try {
-            Log.i(TAG, "Write to " + mFilePath);
+            Log.d(TAG, "Write to " + mFilePath);
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("room " + roomId + " " + getTimeStamp());
             stringBuilder.append("\n                BSSID  RSSI\n");

@@ -23,10 +23,10 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ViewHolder> {
         }
         notifyDataSetChanged();
         Log.d(TAG, localDataSet.size() + " APs discovered.");
-//        String info = "First AP\nSSID: " + mAccessPoints.get(0).SSID + "\n"
-//                + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
-//                + "RSSI: " + mAccessPoints.get(0).level + " dBm\n";
-//        Log.d(TAG, info);
+        //        String info = "First AP\nSSID: " + mAccessPoints.get(0).SSID + "\n"
+        //                + "BSSID: " + mAccessPoints.get(0).BSSID + "\n"
+        //                + "RSSI: " + mAccessPoints.get(0).level + " dBm\n";
+        //        Log.d(TAG, info);
     }
 
     /**
