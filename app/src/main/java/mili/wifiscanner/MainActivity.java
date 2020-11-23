@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mTypeToggle = findViewById(R.id.type_toggle);
-        mTypeToggle.check(R.id.train_button);
         mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
             @Override
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
@@ -100,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Collecting " + mDataType + " data...");
             }
         });
+        mTypeToggle.check(R.id.train_button);
 
         mRoomToggle = findViewById(R.id.room_toggle);
         createRoomChips();
