@@ -1,5 +1,5 @@
 # Wifi Fingerprint
-A simple Android app to scan wifi and get the wifi list and RSSI data.
+A simple Android app to scan wifi and get the wifi list (especially the BSSID and RSSI data).
 
 <p align="center">
   <img src="ScreenShots/WifiScanner1.png" width="200">
