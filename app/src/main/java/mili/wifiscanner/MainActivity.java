@@ -32,6 +32,10 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import umich.cse.yctung.androidlibsvm.LibSVM;
@@ -63,7 +67,14 @@ public class MainActivity extends AppCompatActivity {
     private DataWriter mDataWriter;
 
     private LibSVM mSVM;
-    public static String mSystemPath;
+    public static String[] mSortedBssid;
+    private static String mSystemPath;
+    private boolean mPredictMode;
+    public static String mTrainPath;
+    public static String mModelPath;
+    public static String mTestPath;
+    public static String mPredictPath;
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -143,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
                     if (mDataType == getString(R.string.train_text)) {
                         mHandler.postDelayed(this, mInterval);
                     } else {
-                        mSVM.predict(mSystemPath + "test.txt " + mSystemPath + "model " + mSystemPath + "result.txt");
                         mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -158,10 +168,30 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        mPredictMode = true;
         mSVM = new LibSVM();
-        mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/";
-//        svm.train("-t 2 "/* svm kernel */ + systemPath + "svmlight.dat " + systemPath + "model");
+        mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
+        mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/" + getString(R.string.app_name) + "/";
 
+        mTrainPath = mSystemPath + "svmlight.txt";
+        mModelPath = mSystemPath + "model";
+        mTestPath = mSystemPath + "test.txt";
+        mPredictPath = mSystemPath + "result.txt";
+        File model = new File(mModelPath);
+        File train = new File(mTrainPath);
+        if (!model.exists()) {
+            if (train.exists()) {
+                mSVM.train(" -t 0 " + mTrainPath + " " + mModelPath);
+            } else {
+                mPredictMode = false;
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Missing the training dataset.")
+                        .setMessage("The app will not predict on the test data.")
+                        .setPositiveButton(R.string.dialog_positive, null)
+                        .show();
+            }
+        }
     }
 
     private void startWifiScanner() {
@@ -230,15 +260,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }).show();
         } else if (id == R.id.action_help) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    new AlertDialog.Builder(MainActivity.this)
+            new AlertDialog.Builder(MainActivity.this)
                             .setMessage(R.string.help_info)
                             .setPositiveButton(R.string.dialog_positive, null)
                             .show();
-                }
-            });
         }
 
         return super.onOptionsItemSelected(item);
@@ -258,6 +283,16 @@ public class MainActivity extends AppCompatActivity {
                         + (mInterval/1000.0) + "s"
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
+                if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
+                    try{
+                        mSVM.predict(mSystemPath + "test.txt " + mModelPath + " " + mPredictPath);
+                        List<String> results = Files.readAllLines(FileSystems.getDefault().getPath(mPredictPath));
+                        logToUi(results.get(0));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
             }
         }
     }
