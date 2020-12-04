@@ -1,2 +1,3 @@
+include ':androidlibsvm-release'
 include ':app'
 rootProject.name = "WifiScanner"

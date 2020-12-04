@@ -16,6 +16,7 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +34,7 @@ import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import umich.cse.yctung.androidlibsvm.LibSVM;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -60,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
     private DataWriter mDataWriter;
 
+    private LibSVM mSVM;
+    public static String mSystemPath;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -136,12 +140,28 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Scan once...");
                     logToUi(getString(R.string.retrieving_access_points));
                     mWifiManager.startScan();
-                    mHandler.postDelayed(this, mInterval);
+                    if (mDataType == getString(R.string.train_text)) {
+                        mHandler.postDelayed(this, mInterval);
+                    } else {
+                        mSVM.predict(mSystemPath + "test.txt " + mSystemPath + "model " + mSystemPath + "result.txt");
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mScanTextView.callOnClick();
+                            }
+                        }, 5000);
+
+                    }
                 } else {
                     stopWifiScanner();
                 }
             }
         };
+
+        mSVM = new LibSVM();
+        mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/";
+//        svm.train("-t 2 "/* svm kernel */ + systemPath + "svmlight.dat " + systemPath + "model");
+
     }
 
     private void startWifiScanner() {
