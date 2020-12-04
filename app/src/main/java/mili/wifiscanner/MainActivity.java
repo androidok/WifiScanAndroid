@@ -71,8 +71,10 @@ public class MainActivity extends AppCompatActivity {
     private static String mSystemPath;
     private boolean mPredictMode;
     public static String mTrainPath;
+    public static String mTrainScalePath;
     public static String mModelPath;
     public static String mTestPath;
+    public static String mTestScalePath;
     public static String mPredictPath;
 
 
@@ -175,6 +177,8 @@ public class MainActivity extends AppCompatActivity {
                 + "/" + getString(R.string.app_name) + "/";
 
         mTrainPath = mSystemPath + "svmlight.txt";
+        mTrainScalePath = mSystemPath + "trainscale.txt";
+        mTrainScalePath = mSystemPath + "testscale.txt";
         mModelPath = mSystemPath + "model";
         mTestPath = mSystemPath + "test.txt";
         mPredictPath = mSystemPath + "result.txt";
@@ -182,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         File train = new File(mTrainPath);
         if (!model.exists()) {
             if (train.exists()) {
-                mSVM.train(" -t 0 " + mTrainPath + " " + mModelPath);
+//                mSVM.train(" -t 0 " + mTrainPath + " " + mModelPath + " -v 3");
             } else {
                 mPredictMode = false;
                 new AlertDialog.Builder(MainActivity.this)
@@ -191,6 +195,12 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.dialog_positive, null)
                         .show();
             }
+        }
+        if (mPredictMode) {
+            mSVM.scale(mTrainPath, mTrainScalePath);
+//            mSVM.scale(mTestPath, mTestScalePath);
+            mSVM.train("-g 0.1 -v 3 " + mTrainScalePath + " " + mModelPath);
+            mSVM.predict(mTrainScalePath + " " + mModelPath + " " + mPredictPath);
         }
     }
 
@@ -285,9 +295,12 @@ public class MainActivity extends AppCompatActivity {
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
                 if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
                     try{
-                        mSVM.predict(mSystemPath + "test.txt " + mModelPath + " " + mPredictPath);
+                        mSVM.predict(mTestPath + " " + mModelPath + " " + mPredictPath);
                         List<String> results = Files.readAllLines(FileSystems.getDefault().getPath(mPredictPath));
-                        logToUi(results.get(0));
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Room predicted to be " + results.get(0))
+                                .setPositiveButton(R.string.dialog_positive, null)
+                                .show();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
