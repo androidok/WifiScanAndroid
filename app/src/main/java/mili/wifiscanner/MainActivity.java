@@ -177,16 +177,19 @@ public class MainActivity extends AppCompatActivity {
                 + "/" + getString(R.string.app_name) + "/";
 
         mTrainPath = mSystemPath + "svmlight.txt";
-        mTrainScalePath = mSystemPath + "trainscale.txt";
-        mTrainScalePath = mSystemPath + "testscale.txt";
+        mTrainScalePath = mSystemPath + "scaledtrain.txt";
         mModelPath = mSystemPath + "model";
         mTestPath = mSystemPath + "test.txt";
+        mTestScalePath = mSystemPath + "scaledtest.txt";
         mPredictPath = mSystemPath + "result.txt";
         File model = new File(mModelPath);
         File train = new File(mTrainPath);
         if (!model.exists()) {
             if (train.exists()) {
-//                mSVM.train(" -t 0 " + mTrainPath + " " + mModelPath + " -v 3");
+                mSVM.scale("-l -100 -u -20  " + mTrainPath, mTrainScalePath);
+                String parameters = "-c 0.8 ";
+                mSVM.train(parameters + "-v 3 " + mTrainScalePath + " " + mModelPath);
+                mSVM.train(parameters + mTrainScalePath + " " + mModelPath);
             } else {
                 mPredictMode = false;
                 new AlertDialog.Builder(MainActivity.this)
@@ -195,12 +198,6 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.dialog_positive, null)
                         .show();
             }
-        }
-        if (mPredictMode) {
-            mSVM.scale(mTrainPath, mTrainScalePath);
-//            mSVM.scale(mTestPath, mTestScalePath);
-            mSVM.train("-g 0.1 -v 3 " + mTrainScalePath + " " + mModelPath);
-            mSVM.predict(mTrainScalePath + " " + mModelPath + " " + mPredictPath);
         }
     }
 
@@ -295,7 +292,8 @@ public class MainActivity extends AppCompatActivity {
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
                 if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
                     try{
-                        mSVM.predict(mTestPath + " " + mModelPath + " " + mPredictPath);
+                        mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
+                        mSVM.predict(mTestScalePath + " " + mModelPath + " " + mPredictPath);
                         List<String> results = Files.readAllLines(FileSystems.getDefault().getPath(mPredictPath));
                         new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Room predicted to be " + results.get(0))
