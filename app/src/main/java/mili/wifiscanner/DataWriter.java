@@ -6,7 +6,9 @@ import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,24 +23,23 @@ import static mili.wifiscanner.MainActivity.mTestPath;
 
 public class DataWriter {
     private static String TAG = "DataWriter";
-    private static Path mFilePath;
+    private static String mFilePath;
     
     public DataWriter(CharSequence type, String folderName) {
-        Path rootPath = getRootPath(folderName + "/" + type);
+        String rootPath = getRootPath(folderName + "/" + type);
         String fileName = type + getDateUnderLine() + ".txt";
-        String filePath = rootPath.toString() + "/" + fileName;
+        mFilePath = rootPath.toString() + "/" + fileName;
         try {
-            Files.createDirectories(rootPath);
-            File file = new File(filePath);
+            File file = new File(mFilePath);
+            file.getParentFile().mkdirs();
             file.createNewFile();
-            mFilePath = FileSystems.getDefault().getPath(filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static Path getRootPath(String folderName) {
-        return FileSystems.getDefault().getPath(Environment.getExternalStorageDirectory().getPath(), folderName);
+    private static String getRootPath(String folderName) {
+        return Environment.getExternalStorageDirectory().getPath() + "/" + folderName;
     }
 
     private static String getDateUnderLine() {
@@ -63,7 +64,9 @@ public class DataWriter {
                 stringBuilder.append(i + " " + results.get(i).BSSID + " " + results.get(i).level + "\n");
             }
             stringBuilder.append("\n");
-            Files.write(mFilePath, stringBuilder.toString().getBytes(), StandardOpenOption.APPEND);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(mFilePath, true));
+            outputStreamWriter.write(stringBuilder.toString());
+            outputStreamWriter.close();
 
             StringBuilder svmBuilder = new StringBuilder();
             svmBuilder.append(roomId + " ");
@@ -84,9 +87,9 @@ public class DataWriter {
             svmBuilder.append("\n");
             File file = new File(mTestPath);
             file.createNewFile();
-            Files.write(FileSystems.getDefault().getPath(mTestPath),
-                    svmBuilder.toString().getBytes(),
-                    StandardOpenOption.TRUNCATE_EXISTING);
+            OutputStreamWriter testoutputStreamWriter = new OutputStreamWriter(new FileOutputStream(mTestPath, false));
+            testoutputStreamWriter.write(stringBuilder.toString());
+            testoutputStreamWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
