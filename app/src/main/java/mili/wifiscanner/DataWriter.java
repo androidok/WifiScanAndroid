@@ -1,8 +1,8 @@
 package mili.wifiscanner;
 
 import android.net.wifi.ScanResult;
+import android.os.Build;
 import android.os.Environment;
-import android.content.res.Resources;
 import android.util.Log;
 
 import java.io.File;
@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
