@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler mHandler;
     private Runnable mRunnable;
-    private static int mInterval = 30000; // 1000 milliseconds == 1 second
+    private static int mInterval = 4000; // 1000 milliseconds == 1 second
     private static boolean mScanStarted = false;
 
     private DataWriter mDataWriter;
@@ -162,7 +162,6 @@ public class MainActivity extends AppCompatActivity {
                                 mScanTextView.callOnClick();
                             }
                         }, 5000);
-
                     }
                 } else {
                     stopWifiScanner();
