@@ -88,7 +88,7 @@ public class DataWriter {
             File file = new File(mTestPath);
             file.createNewFile();
             OutputStreamWriter testoutputStreamWriter = new OutputStreamWriter(new FileOutputStream(mTestPath, false));
-            testoutputStreamWriter.write(stringBuilder.toString());
+            testoutputStreamWriter.write(svmBuilder.toString());
             testoutputStreamWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
