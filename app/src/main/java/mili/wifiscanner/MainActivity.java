@@ -33,11 +33,13 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+
 import umich.cse.yctung.androidlibsvm.LibSVM;
 
 public class MainActivity extends AppCompatActivity {
@@ -93,9 +95,9 @@ public class MainActivity extends AppCompatActivity {
         mScanTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!mScanStarted) {
+                if (!mScanStarted) {
                     mScanStarted = !mScanStarted;
-                    Log.d(TAG,  "Start scanning...");
+                    Log.d(TAG, "Start scanning...");
                     startWifiScanner();
 
                 } else {
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(
                 this,
-                new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 REQUEST_PERMISSION_CODE);
 
@@ -149,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new Handler();
         mRunnable = new Runnable() {
             public void run() {
-                if(mScanStarted) {
+                if (mScanStarted) {
                     Log.d(TAG, "Scan once...");
                     logToUi(getString(R.string.retrieving_access_points));
                     mWifiManager.startScan();
@@ -185,10 +187,8 @@ public class MainActivity extends AppCompatActivity {
         File train = new File(mTrainPath);
         if (!model.exists()) {
             if (train.exists()) {
-                mSVM.scale("-l -100 -u -20  " + mTrainPath, mTrainScalePath);
-                String parameters = "-c 0.8 ";
-                mSVM.train(parameters + "-v 3 " + mTrainScalePath + " " + mModelPath);
-                mSVM.train(parameters + mTrainScalePath + " " + mModelPath);
+                trainSVM();
+
             } else {
                 mPredictMode = false;
                 new AlertDialog.Builder(MainActivity.this)
@@ -200,6 +200,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void trainSVM() {
+
+//        mSVM.scale("-l -100 -u -20  " + mTrainPath, mTrainScalePath);
+//        mTrainScalePath = mTrainPath;
+//        String parameters = "-c 0.8 -g 0.0001 ";
+//        mSVM.train(parameters + "-v 3 " + mTrainScalePath + " " + mModelPath);
+//        mSVM.train(parameters + mTrainScalePath + " " + mModelPath);
+    }
+
     private void startWifiScanner() {
         if (mRoomToggle.getCheckedChipId() == ChipGroup.NO_ID) {
             new AlertDialog.Builder(MainActivity.this)
@@ -209,10 +218,12 @@ public class MainActivity extends AppCompatActivity {
             mScanTextView.callOnClick();
         } else {
             mDataWriter = new DataWriter(mDataType, getString(R.string.app_name));
-            new AlertDialog.Builder(MainActivity.this)
-                    .setMessage(mDataWriter.info())
-                    .setPositiveButton(R.string.dialog_positive, null)
-                    .show();
+            if (mDataType == getString(R.string.train_text)) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage(mDataWriter.info())
+                        .setPositiveButton(R.string.dialog_positive, null)
+                        .show();
+            }
             mHandler.post(mRunnable);
         }
     }
@@ -267,9 +278,9 @@ public class MainActivity extends AppCompatActivity {
                     }).show();
         } else if (id == R.id.action_help) {
             new AlertDialog.Builder(MainActivity.this)
-                            .setMessage(R.string.help_info)
-                            .setPositiveButton(R.string.dialog_positive, null)
-                            .show();
+                    .setMessage(R.string.help_info)
+                    .setPositiveButton(R.string.dialog_positive, null)
+                    .show();
         }
 
         return super.onOptionsItemSelected(item);
@@ -279,23 +290,30 @@ public class MainActivity extends AppCompatActivity {
     private class WifiScanReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(mScanStarted) {
+            if (mScanStarted) {
                 mAccessPoints = mWifiManager.getScanResults();
                 mAdapter.swapData(mAccessPoints);
                 mAdapter.notifyDataSetChanged();
                 logToUi(getString(R.string.stop_scan_info)
                         + "\n" + mAccessPoints.size()
                         + " APs discovered.\nCurrent scan delay: "
-                        + (mInterval/1000.0) + "s"
+                        + (mInterval / 1000.0) + "s"
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
                 if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
-                    try{
-                        mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
+                    try {
+                        // mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
+                        mTestScalePath = mTestPath;
                         mSVM.predict(mTestScalePath + " " + mModelPath + " " + mPredictPath);
-                        List<String> results = Files.readAllLines(FileSystems.getDefault().getPath(mPredictPath));
+                        File file = new File(mPredictPath);
+                        FileInputStream fis = new FileInputStream(file);
+                        byte[] data = new byte[(int) file.length()];
+                        fis.read(data);
+                        fis.close();
+
+                        String results = new String(data, "UTF-8");
                         new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Room predicted to be " + results.get(0))
+                                .setTitle("Room predicted to be " + results)
                                 .setPositiveButton(R.string.dialog_positive, null)
                                 .show();
                     } catch (IOException e) {
@@ -317,16 +335,16 @@ public class MainActivity extends AppCompatActivity {
     private void createRoomChips() {
         int childCount = mRoomToggle.getChildCount();
         Log.d(TAG, childCount + " children");
-        for(int i=childCount-1; i>0; i--) {
+        for (int i = childCount - 1; i > 0; i--) {
             View currentChild = mRoomToggle.getChildAt(i);
             // Change ImageView with your desired type view
             if (currentChild instanceof Chip) {
                 mRoomToggle.removeView(currentChild);
             }
         }
-        for (int i = 0; i<mRoomNum; i++) {
+        for (int i = 0; i < mRoomNum; i++) {
             Chip chip = new Chip(mRoomToggle.getContext());
-            chip.setText(String.valueOf(i+1));
+            chip.setText(String.valueOf(i + 1));
             chip.setCheckable(true);
             mRoomToggle.addView(chip);
         }
@@ -335,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
     private void changeSettingItem() {
         String[] items = getResources().getStringArray(R.array.items_array);
         String settingItem = items[mSettingID];
-        Log.d(TAG,  settingItem + " is chosen");
+        Log.d(TAG, settingItem + " is chosen");
         // get dialog_setting layout view
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         View dialogView = inflater.inflate(R.layout.dialog_setting, null);
@@ -379,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
                         })
                 .setNegativeButton(R.string.dialog_negative,
                         new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,int id) {
+                            public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
                             }
                         });
