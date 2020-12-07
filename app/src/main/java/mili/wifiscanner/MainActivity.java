@@ -32,6 +32,16 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.TermCriteria;
+import org.opencv.ml.Ml;
+import org.opencv.ml.SVM;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -68,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
 
     private DataWriter mDataWriter;
 
-    private LibSVM mSVM;
     public static String[] mSortedBssid;
     private static String mSystemPath;
     private boolean mPredictMode;
@@ -89,118 +98,33 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        mScanTextView = findViewById(R.id.scan_text_view);
-        mScanTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!mScanStarted) {
-                    mScanStarted = !mScanStarted;
-                    Log.d(TAG, "Start scanning...");
-                    startWifiScanner();
-
-                } else {
-                    mScanStarted = !mScanStarted;
-                    Log.d(TAG, "Stop scanning...");
-                    stopWifiScanner();
-                }
-            }
-        });
-
-        mTypeToggle = findViewById(R.id.type_toggle);
-        mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-            @Override
-            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                Button checkedButton = findViewById(checkedId);
-                checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
-                mDataType = checkedButton.getText();
-                Log.d(TAG, "Collecting " + mDataType + " data...");
-            }
-        });
-        mTypeToggle.check(R.id.train_button);
-
-        mRoomToggle = findViewById(R.id.room_toggle);
-        createRoomChips();
-        mRoomToggle.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(ChipGroup group, int checkedId) {
-                Chip checkedChip = findViewById(checkedId);
-                mRoomID = checkedChip.getText();
-                Log.d(TAG, "Collecting room " + mRoomID + " data...");
-            }
-        });
-
-        ActivityCompat.requestPermissions(
-                this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                REQUEST_PERMISSION_CODE);
-
-        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        mWifiScanReceiver = new WifiScanReceiver();
-
-        mAccessPoints = new ArrayList<>();
-        mAdapter = new ScanAdapter(mAccessPoints);
-
-        mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
-        mHandler = new Handler();
-        mRunnable = new Runnable() {
-            public void run() {
-                if (mScanStarted) {
-                    Log.d(TAG, "Scan once...");
-                    logToUi(getString(R.string.retrieving_access_points));
-                    mWifiManager.startScan();
-                    if (mDataType == getString(R.string.train_text)) {
-                        mHandler.postDelayed(this, mInterval);
-                    } else {
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mScanTextView.callOnClick();
-                            }
-                        }, 5000);
-                    }
-                } else {
-                    stopWifiScanner();
-                }
-            }
-        };
-
-        mPredictMode = true;
-        mSVM = new LibSVM();
-        mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
-        mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/" + getString(R.string.app_name) + "/";
-
-        mTrainPath = mSystemPath + "svmlight.txt";
-        mTrainScalePath = mSystemPath + "scaledtrain.txt";
-        mModelPath = mSystemPath + "model";
-        mTestPath = mSystemPath + "test.txt";
-        mTestScalePath = mSystemPath + "scaledtest.txt";
-        mPredictPath = mSystemPath + "result.txt";
-        File model = new File(mModelPath);
-        File train = new File(mTrainPath);
-        if (!model.exists()) {
-            if (train.exists()) {
-                trainSVM();
-
-            } else {
-                mPredictMode = false;
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Missing the training dataset.")
-                        .setMessage("The app will not predict on the test data.")
-                        .setPositiveButton(R.string.dialog_positive, null)
-                        .show();
-            }
+        Log.i(TAG, "Trying to load OpenCV library");
+        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mOpenCVCallBack))
+        {
+            Log.e(TAG, "Cannot connect to OpenCV Manager");
         }
+
     }
 
     private void trainSVM() {
+        // Load the native OpenCV library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+        // Set up training data
+        int[] labels = getResources().getIntArray(R.array.trainlabels);
+        int[] trainingData = getResources().getIntArray(R.array.traindata);
+        Mat trainingDataMat = new Mat(0, 30, CvType.CV_32FC1);
+        trainingDataMat.put(0, 0, trainingData);
+        Mat labelsMat = new Mat(4, 1, CvType.CV_32SC1);
+        labelsMat.put(0, 0, labels);
+
+        // Train the SVM
+        SVM svm = SVM.create();
+        svm.setType(SVM.C_SVC);
+        svm.setKernel(SVM.LINEAR);
+        svm.setTermCriteria(new TermCriteria(TermCriteria.MAX_ITER, 100, 1e-6));
+        svm.train(trainingDataMat, Ml.ROW_SAMPLE, labelsMat);
 
 //        mSVM.scale("-l -100 -u -20  " + mTrainPath, mTrainScalePath);
 //        mTrainScalePath = mTrainPath;
@@ -286,6 +210,132 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                    // Create and set View
+                    setContentView(R.layout.activity_main);
+
+
+                    mScanTextView = findViewById(R.id.scan_text_view);
+                    mScanTextView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (!mScanStarted) {
+                                mScanStarted = !mScanStarted;
+                                Log.d(TAG, "Start scanning...");
+                                startWifiScanner();
+
+                            } else {
+                                mScanStarted = !mScanStarted;
+                                Log.d(TAG, "Stop scanning...");
+                                stopWifiScanner();
+                            }
+                        }
+                    });
+
+                    mTypeToggle = findViewById(R.id.type_toggle);
+                    mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+                        @Override
+                        public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                            Button checkedButton = findViewById(checkedId);
+                            checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
+                            mDataType = checkedButton.getText();
+                            Log.d(TAG, "Collecting " + mDataType + " data...");
+                        }
+                    });
+                    mTypeToggle.check(R.id.train_button);
+
+                    mRoomToggle = findViewById(R.id.room_toggle);
+                    createRoomChips();
+                    mRoomToggle.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
+                        @Override
+                        public void onCheckedChanged(ChipGroup group, int checkedId) {
+                            Chip checkedChip = findViewById(checkedId);
+                            mRoomID = checkedChip.getText();
+                            Log.d(TAG, "Collecting room " + mRoomID + " data...");
+                        }
+                    });
+
+                    ActivityCompat.requestPermissions(
+                            MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            REQUEST_PERMISSION_CODE);
+
+                    mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                    mWifiScanReceiver = new WifiScanReceiver();
+
+                    mAccessPoints = new ArrayList<>();
+                    mAdapter = new ScanAdapter(mAccessPoints);
+
+                    mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
+                    mRecyclerView.setAdapter(mAdapter);
+                    mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+
+
+                    mHandler = new Handler();
+                    mRunnable = new Runnable() {
+                        public void run() {
+                            if (mScanStarted) {
+                                Log.d(TAG, "Scan once...");
+                                logToUi(getString(R.string.retrieving_access_points));
+                                mWifiManager.startScan();
+                                if (mDataType == getString(R.string.train_text)) {
+                                    mHandler.postDelayed(this, mInterval);
+                                } else {
+                                    mHandler.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mScanTextView.callOnClick();
+                                        }
+                                    }, 5000);
+                                }
+                            } else {
+                                stopWifiScanner();
+                            }
+                        }
+                    };
+
+                    mPredictMode = true;
+
+                    mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
+                    mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                            + "/" + getString(R.string.app_name) + "/";
+
+                    mTrainPath = mSystemPath + "svmlight.txt";
+                    mTrainScalePath = mSystemPath + "scaledtrain.txt";
+                    mModelPath = mSystemPath + "model";
+                    mTestPath = mSystemPath + "test.txt";
+                    mTestScalePath = mSystemPath + "scaledtest.txt";
+                    mPredictPath = mSystemPath + "result.txt";
+                    File model = new File(mModelPath);
+                    File train = new File(mTrainPath);
+//        if (!model.exists()) {
+//            if (train.exists()) {
+////                trainSVM();
+//            } else {
+//                mPredictMode = false;
+//                new AlertDialog.Builder(MainActivity.this)
+//                        .setTitle("Missing the training dataset.")
+//                        .setMessage("The app will not predict on the test data.")
+//                        .setPositiveButton(R.string.dialog_positive, null)
+//                        .show();
+//            }
+//        }
+                    trainSVM();
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
 
     private class WifiScanReceiver extends BroadcastReceiver {
         @Override
@@ -301,24 +351,24 @@ public class MainActivity extends AppCompatActivity {
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
                 if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
-                    try {
-                        // mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
-                        mTestScalePath = mTestPath;
-                        mSVM.predict(mTestScalePath + " " + mModelPath + " " + mPredictPath);
-                        File file = new File(mPredictPath);
-                        FileInputStream fis = new FileInputStream(file);
-                        byte[] data = new byte[(int) file.length()];
-                        fis.read(data);
-                        fis.close();
-
-                        String results = new String(data, "UTF-8");
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Room predicted to be " + results)
-                                .setPositiveButton(R.string.dialog_positive, null)
-                                .show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
+////                        mTestScalePath = mTestPath;
+//                        mSVM.predict(mTestScalePath + " " + mModelPath + " " + mPredictPath);
+//                        File file = new File(mPredictPath);
+//                        FileInputStream fis = new FileInputStream(file);
+//                        byte[] data = new byte[(int) file.length()];
+//                        fis.read(data);
+//                        fis.close();
+//
+//                        String results = new String(data, "UTF-8");
+//                        new AlertDialog.Builder(MainActivity.this)
+//                                .setTitle("Room predicted to be " + results)
+//                                .setPositiveButton(R.string.dialog_positive, null)
+//                                .show();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
 
                 }
             }
