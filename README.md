@@ -11,4 +11,6 @@ A simple Android app to scan wifi and get the wifi list (especially the BSSID an
   <img src="ScreenShots/WifiScanner7.png" width="200">
   <img src="ScreenShots/WifiScanner8.png" width="200">
   <img src="ScreenShots/WifiScanner9.png" width="200">
+  <img src="ScreenShots/WifiScanner10.png" width="200">
+  <img src="ScreenShots/WifiScanner11.png" width="200">
 </p>
