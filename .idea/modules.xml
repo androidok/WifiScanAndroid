@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/WifiScanner.iml" filepath="$PROJECT_DIR$/.idea/modules/WifiScanner.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/androidlibsvm-release/WifiScanner.androidlibsvm-release.iml" filepath="$PROJECT_DIR$/.idea/modules/androidlibsvm-release/WifiScanner.androidlibsvm-release.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/WifiScanner.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/WifiScanner.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/WifiScanner.sdk.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/WifiScanner.sdk.iml" />
     </modules>
   </component>
 </project>

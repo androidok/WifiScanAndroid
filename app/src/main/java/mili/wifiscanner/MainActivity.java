@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -27,30 +28,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.TermCriteria;
-import org.opencv.ml.Ml;
-import org.opencv.ml.SVM;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import umich.cse.yctung.androidlibsvm.LibSVM;
+import weka.classifiers.Classifier;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instances;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -62,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private MaterialButtonToggleGroup mTypeToggle;
     private ChipGroup mRoomToggle;
     private static CharSequence mDataType = "unknown";
-    private static int mRoomNum = 4;
+    private static int mRoomNum = 5;
     private static CharSequence mRoomID = "unknown";
     private static int mUserInput = 0;
     private static int mSettingID = -1;
@@ -73,20 +65,19 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler mHandler;
     private Runnable mRunnable;
-    private static int mInterval = 4000; // 1000 milliseconds == 1 second
+    private static int mInterval = 10000; // 1000 milliseconds == 1 second
     private static boolean mScanStarted = false;
 
     private DataWriter mDataWriter;
 
     public static String[] mSortedBssid;
+    public static List<String> mRooms;
+    private static final int mMinRSSI = -100;
     private static String mSystemPath;
-    private boolean mPredictMode;
-    public static String mTrainPath;
-    public static String mTrainScalePath;
-    public static String mModelPath;
-    public static String mTestPath;
-    public static String mTestScalePath;
-    public static String mPredictPath;
+    private boolean mPredictMode = false;
+    private Instances mDataUnpredicted;
+    private int[] mRSSI;
+    private static Classifier mClassifier = null;
 
 
     @Override
@@ -99,39 +90,122 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.i(TAG, "Trying to load OpenCV library");
-        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mOpenCVCallBack))
-        {
-            Log.e(TAG, "Cannot connect to OpenCV Manager");
+        setContentView(R.layout.activity_main);
+
+
+        mScanTextView = findViewById(R.id.scan_text_view);
+        mScanTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!mScanStarted) {
+                    mScanStarted = !mScanStarted;
+                    Log.d(TAG, "Start scanning...");
+                    startWifiScanner();
+
+                } else {
+                    mScanStarted = !mScanStarted;
+                    Log.d(TAG, "Stop scanning...");
+                    stopWifiScanner();
+                }
+            }
+        });
+
+        mTypeToggle = findViewById(R.id.type_toggle);
+        mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                Button checkedButton = findViewById(checkedId);
+                checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
+                mDataType = checkedButton.getText();
+                Log.d(TAG, "Collecting " + mDataType + " data...");
+            }
+        });
+        mTypeToggle.check(R.id.train_button);
+
+        mRoomToggle = findViewById(R.id.room_toggle);
+        createRoomChips();
+        mRoomToggle.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(ChipGroup group, int checkedId) {
+                Chip checkedChip = findViewById(checkedId);
+                mRoomID = checkedChip.getText();
+                Log.d(TAG, "Collecting room " + mRoomID + " data...");
+            }
+        });
+
+        ActivityCompat.requestPermissions(
+                MainActivity.this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                REQUEST_PERMISSION_CODE);
+
+        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        mWifiScanReceiver = new WifiScanReceiver();
+
+        mAccessPoints = new ArrayList<>();
+        mAdapter = new ScanAdapter(mAccessPoints);
+
+        mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+
+
+        mHandler = new Handler();
+        mRunnable = new Runnable() {
+            public void run() {
+                if (mScanStarted) {
+                    Log.d(TAG, "Scan once...");
+                    logToUi(getString(R.string.retrieving_access_points));
+                    mWifiManager.startScan();
+                    mHandler.postDelayed(this, mInterval);
+                } else {
+                    stopWifiScanner();
+                }
+            }
+        };
+
+
+
+        mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
+        mRooms = Arrays.asList(getResources().getStringArray(R.array.rooms));
+        mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/" + getString(R.string.app_name) + "/";
+        Log.d(TAG, Arrays.asList(mSortedBssid).toString());
+        Log.d(TAG, mRooms.toString());
+
+
+        AssetManager assetManager = getAssets();
+        try {
+            mClassifier = (Classifier) weka.core.SerializationHelper.read(assetManager.open("android_rnd.model"));
+            Log.d(TAG, "Model loaded.");
+            Toast.makeText(this, "Model loaded.", Toast.LENGTH_SHORT).show();
+            mPredictMode = true;
+            // Instances(...) requires ArrayList<> instead of List<>...
+            ArrayList<Attribute> attributeList = new ArrayList<Attribute>(2) {
+                {
+                    for (String bssid : mSortedBssid) {
+                        add(new Attribute(bssid));
+                    }
+                    Attribute attributeClass = new Attribute("@@class@@", mRooms);
+                    add(attributeClass);
+                }
+            };
+            // unpredicted data sets (reference to sample structure for new instances)
+            mDataUnpredicted = new Instances("TestInstances",
+                    attributeList, 1);
+            // last feature is target variable
+            mDataUnpredicted.setClassIndex(mDataUnpredicted.numAttributes() - 1);
+            Log.d(TAG, mDataUnpredicted.toSummaryString());
+
+        } catch (Exception e) {
+            Log.d(TAG, "Model not found.");
+            e.printStackTrace();
         }
 
+
     }
 
-    private void trainSVM() {
-        // Load the native OpenCV library
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-        // Set up training data
-        int[] labels = getResources().getIntArray(R.array.trainlabels);
-        int[] trainingData = getResources().getIntArray(R.array.traindata);
-        Mat trainingDataMat = new Mat(0, 30, CvType.CV_32FC1);
-        trainingDataMat.put(0, 0, trainingData);
-        Mat labelsMat = new Mat(4, 1, CvType.CV_32SC1);
-        labelsMat.put(0, 0, labels);
-
-        // Train the SVM
-        SVM svm = SVM.create();
-        svm.setType(SVM.C_SVC);
-        svm.setKernel(SVM.LINEAR);
-        svm.setTermCriteria(new TermCriteria(TermCriteria.MAX_ITER, 100, 1e-6));
-        svm.train(trainingDataMat, Ml.ROW_SAMPLE, labelsMat);
-
-//        mSVM.scale("-l -100 -u -20  " + mTrainPath, mTrainScalePath);
-//        mTrainScalePath = mTrainPath;
-//        String parameters = "-c 0.8 -g 0.0001 ";
-//        mSVM.train(parameters + "-v 3 " + mTrainScalePath + " " + mModelPath);
-//        mSVM.train(parameters + mTrainScalePath + " " + mModelPath);
-    }
 
     private void startWifiScanner() {
         if (mRoomToggle.getCheckedChipId() == ChipGroup.NO_ID) {
@@ -210,132 +284,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    // Create and set View
-                    setContentView(R.layout.activity_main);
 
-
-                    mScanTextView = findViewById(R.id.scan_text_view);
-                    mScanTextView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (!mScanStarted) {
-                                mScanStarted = !mScanStarted;
-                                Log.d(TAG, "Start scanning...");
-                                startWifiScanner();
-
-                            } else {
-                                mScanStarted = !mScanStarted;
-                                Log.d(TAG, "Stop scanning...");
-                                stopWifiScanner();
-                            }
-                        }
-                    });
-
-                    mTypeToggle = findViewById(R.id.type_toggle);
-                    mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-                        @Override
-                        public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                            Button checkedButton = findViewById(checkedId);
-                            checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
-                            mDataType = checkedButton.getText();
-                            Log.d(TAG, "Collecting " + mDataType + " data...");
-                        }
-                    });
-                    mTypeToggle.check(R.id.train_button);
-
-                    mRoomToggle = findViewById(R.id.room_toggle);
-                    createRoomChips();
-                    mRoomToggle.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(ChipGroup group, int checkedId) {
-                            Chip checkedChip = findViewById(checkedId);
-                            mRoomID = checkedChip.getText();
-                            Log.d(TAG, "Collecting room " + mRoomID + " data...");
-                        }
-                    });
-
-                    ActivityCompat.requestPermissions(
-                            MainActivity.this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            REQUEST_PERMISSION_CODE);
-
-                    mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                    mWifiScanReceiver = new WifiScanReceiver();
-
-                    mAccessPoints = new ArrayList<>();
-                    mAdapter = new ScanAdapter(mAccessPoints);
-
-                    mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
-                    mRecyclerView.setAdapter(mAdapter);
-                    mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-
-
-                    mHandler = new Handler();
-                    mRunnable = new Runnable() {
-                        public void run() {
-                            if (mScanStarted) {
-                                Log.d(TAG, "Scan once...");
-                                logToUi(getString(R.string.retrieving_access_points));
-                                mWifiManager.startScan();
-                                if (mDataType == getString(R.string.train_text)) {
-                                    mHandler.postDelayed(this, mInterval);
-                                } else {
-                                    mHandler.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mScanTextView.callOnClick();
-                                        }
-                                    }, 5000);
-                                }
-                            } else {
-                                stopWifiScanner();
-                            }
-                        }
-                    };
-
-                    mPredictMode = true;
-
-                    mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
-                    mSystemPath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                            + "/" + getString(R.string.app_name) + "/";
-
-                    mTrainPath = mSystemPath + "svmlight.txt";
-                    mTrainScalePath = mSystemPath + "scaledtrain.txt";
-                    mModelPath = mSystemPath + "model";
-                    mTestPath = mSystemPath + "test.txt";
-                    mTestScalePath = mSystemPath + "scaledtest.txt";
-                    mPredictPath = mSystemPath + "result.txt";
-                    File model = new File(mModelPath);
-                    File train = new File(mTrainPath);
-//        if (!model.exists()) {
-//            if (train.exists()) {
-////                trainSVM();
-//            } else {
-//                mPredictMode = false;
-//                new AlertDialog.Builder(MainActivity.this)
-//                        .setTitle("Missing the training dataset.")
-//                        .setMessage("The app will not predict on the test data.")
-//                        .setPositiveButton(R.string.dialog_positive, null)
-//                        .show();
-//            }
-//        }
-                    trainSVM();
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
-            }
-        }
-    };
 
     private class WifiScanReceiver extends BroadcastReceiver {
         @Override
@@ -350,26 +299,40 @@ public class MainActivity extends AppCompatActivity {
                         + (mInterval / 1000.0) + "s"
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
-                if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
-//                    try {
-//                        mSVM.scale("-l -100 -u -20  " + mTestPath, mTestScalePath);
-////                        mTestScalePath = mTestPath;
-//                        mSVM.predict(mTestScalePath + " " + mModelPath + " " + mPredictPath);
-//                        File file = new File(mPredictPath);
-//                        FileInputStream fis = new FileInputStream(file);
-//                        byte[] data = new byte[(int) file.length()];
-//                        fis.read(data);
-//                        fis.close();
-//
-//                        String results = new String(data, "UTF-8");
-//                        new AlertDialog.Builder(MainActivity.this)
-//                                .setTitle("Room predicted to be " + results)
-//                                .setPositiveButton(R.string.dialog_positive, null)
-//                                .show();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
 
+                if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
+                    mRSSI = new int[mSortedBssid.length];
+                    for (int i = 0; i<mRSSI.length; i++) {
+                        mRSSI[i] = mMinRSSI;
+                        for (int j = 0; j<mAccessPoints.size(); j++) {
+                            if (mSortedBssid[i].equals(mAccessPoints.get(j).BSSID)) {
+                                mRSSI[i] = mAccessPoints.get(j).level;
+                                break;
+                            }
+                        }
+                    }
+                    DenseInstance newInstance = new DenseInstance(mDataUnpredicted.numAttributes()) {
+                        {
+                            int i= 0;
+                            for (String bssid : mSortedBssid) {
+                                setValue(mDataUnpredicted.attribute(bssid), mRSSI[i]);
+                                i++;
+                            }
+                        }
+                    };
+                    // reference to dataset
+                    newInstance.setDataset(mDataUnpredicted);
+                    Log.d(TAG, newInstance.toStringNoWeight());
+                    try {
+                        Double result = mClassifier.classifyInstance(newInstance);
+                        // String className = mRooms.get(result.intValue());
+                        // String msg = "predicted: " + className + ", actual: room" + mRoomID;
+                        String msg = "predicted: " + mRooms.get(result.intValue());
+                        logToUi(msg);
+                    } catch (Exception e) {
+                        Log.d(TAG, "prediction failed");
+                        e.printStackTrace();
+                    }
                 }
             }
         }

@@ -2,34 +2,34 @@
 <resources>
     <array name="sorted_bssid">
         <item>04:bd:88:76:f9:f2</item>
-        <item>04:bd:88:76:f9:f0</item>
         <item>04:bd:88:76:f9:f1</item>
-        <item>04:bd:88:76:f9:e2</item>
-        <item>04:bd:88:76:f9:e0</item>
-        <item>04:bd:88:76:f9:e1</item>
-        <item>04:bd:88:76:f5:81</item>
-        <item>18:64:72:29:09:c1</item>
-        <item>84:d4:7e:4a:d1:e2</item>
-        <item>04:bd:88:76:f5:82</item>
-        <item>04:bd:88:76:f5:80</item>
-        <item>62:45:b7:78:a1:82</item>
-        <item>18:64:72:29:09:c2</item>
-        <item>04:bd:88:76:f4:20</item>
-        <item>04:bd:88:77:08:22</item>
-        <item>18:64:72:29:09:c0</item>
-        <item>04:bd:88:76:f4:21</item>
-        <item>04:bd:88:76:f7:21</item>
-        <item>04:bd:88:77:08:20</item>
-        <item>04:bd:88:77:08:21</item>
-        <item>70:3a:0e:45:93:02</item>
-        <item>04:bd:88:76:f7:20</item>
+        <item>04:bd:88:76:f9:f0</item>
         <item>62:45:b6:ce:ac:21</item>
-        <item>04:bd:88:76:f6:80</item>
+        <item>04:bd:88:76:f9:e1</item>
+        <item>04:bd:88:76:f9:e0</item>
+        <item>04:bd:88:76:f9:e2</item>
+        <item>62:45:b7:78:a1:82</item>
+        <item>04:bd:88:77:05:e2</item>
+        <item>fe:f5:c4:82:95:d6</item>
         <item>04:bd:88:76:f6:82</item>
-        <item>04:bd:88:76:f4:22</item>
-        <item>70:8b:cd:5e:4f:f0</item>
-        <item>18:64:72:29:09:d2</item>
+        <item>04:bd:88:76:f6:80</item>
+        <item>04:bd:88:77:08:21</item>
+        <item>18:64:72:29:09:c1</item>
+        <item>04:bd:88:77:08:22</item>
+        <item>04:bd:88:77:08:20</item>
+        <item>04:bd:88:76:f4:20</item>
         <item>04:bd:88:76:f6:81</item>
-        <item>84:d4:7e:4a:68:02</item>
+        <item>18:64:72:29:09:c0</item>
+        <item>04:bd:88:76:f5:80</item>
+        <item>04:bd:88:76:f5:81</item>
+        <item>04:bd:88:76:f4:21</item>
+        <item>70:3a:0e:45:93:02</item>
+        <item>70:8b:cd:5e:4f:f0</item>
+        <item>04:bd:88:76:f4:22</item>
+        <item>18:64:72:29:09:c2</item>
+        <item>04:bd:88:76:f5:82</item>
+        <item>04:bd:88:76:f6:e2</item>
+        <item>de:ef:ca:30:a9:96</item>
+        <item>84:d4:7e:4a:4c:02</item>
     </array>
 </resources>

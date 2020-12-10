@@ -1,7 +1,6 @@
 package mili.wifiscanner;
 
 import android.net.wifi.ScanResult;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -9,16 +8,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-
-import static mili.wifiscanner.MainActivity.mSortedBssid;
-import static mili.wifiscanner.MainActivity.mTestPath;
 
 
 public class DataWriter {
@@ -67,29 +59,6 @@ public class DataWriter {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(mFilePath, true));
             outputStreamWriter.write(stringBuilder.toString());
             outputStreamWriter.close();
-
-            StringBuilder svmBuilder = new StringBuilder();
-            svmBuilder.append(roomId + " ");
-            int[] rssi = new int[mSortedBssid.length];
-            for (int i = 0; i<mSortedBssid.length; i++) {
-                rssi[i] = -100;
-            }
-            for (int i = 0; i<results.size(); i++) {
-                for (int j = 0; j<mSortedBssid.length; j++) {
-                    if (mSortedBssid[j].equals(results.get(i).BSSID)) {
-                        rssi[j] = results.get(i).level;
-                    }
-                }
-            }
-            for (int i = 0; i<mSortedBssid.length; i++) {
-                svmBuilder.append(i + ":" + rssi[i] + " ");
-            }
-            svmBuilder.append("\n");
-            File file = new File(mTestPath);
-            file.createNewFile();
-            OutputStreamWriter testoutputStreamWriter = new OutputStreamWriter(new FileOutputStream(mTestPath, false));
-            testoutputStreamWriter.write(svmBuilder.toString());
-            testoutputStreamWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
