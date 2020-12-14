@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler mHandler;
     private Runnable mRunnable;
-    private static int mInterval = 10000; // 1000 milliseconds == 1 second
+    private static int mInterval = 5000; // 1000 milliseconds == 1 second
     private static boolean mScanStarted = false;
 
     private DataWriter mDataWriter;
