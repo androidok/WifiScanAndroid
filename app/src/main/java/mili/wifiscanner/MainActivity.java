@@ -79,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     private int[] mRSSI;
     private static Classifier mClassifier = null;
 
+    private MyCanvasView myCanvasView;
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-
+        myCanvasView = findViewById(R.id.canvas_view);
 
         mScanTextView = findViewById(R.id.scan_text_view);
         mScanTextView.setOnClickListener(new View.OnClickListener() {
@@ -129,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(ChipGroup group, int checkedId) {
                 Chip checkedChip = findViewById(checkedId);
                 mRoomID = checkedChip.getText();
+                myCanvasView.setImage(checkedId-1);
                 Log.d(TAG, "Collecting room " + mRoomID + " data...");
             }
         });
@@ -155,7 +158,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (mScanStarted) {
                     Log.d(TAG, "Scan once...");
-                    logToUi(getString(R.string.retrieving_access_points));
+                    logToUi(mAccessPoints.size()
+                            + " APs discovered.\n" + getString(R.string.retrieving_access_points));
                     mWifiManager.startScan();
                     mHandler.postDelayed(this, mInterval);
                 } else {
