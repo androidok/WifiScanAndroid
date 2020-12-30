@@ -3,6 +3,7 @@ package mili.wifiscanner;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -49,8 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_CODE = 2;
 
     private TextView mScanTextView;
-    private RecyclerView mRecyclerView;
-    private ScanAdapter mAdapter;
+
     private MaterialButtonToggleGroup mTypeToggle;
     private ChipGroup mRoomToggle;
     private static CharSequence mDataType = "unknown";
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
-    List<ScanResult> mAccessPoints;
+    public List<ScanResult> mAccessPoints;
 
     private Handler mHandler;
     private Runnable mRunnable;
@@ -79,7 +79,12 @@ public class MainActivity extends AppCompatActivity {
     private int[] mRSSI;
     private static Classifier mClassifier = null;
 
-    private MyCanvasView myCanvasView;
+//    private MyCanvasView myCanvasView;
+
+
+    private ChartFragment mChartFragment;
+    private RecyclerFragment mRecyclerFragment;
+    private boolean mFragmentSwitch = false;
 
 
     @Override
@@ -93,7 +98,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        myCanvasView = findViewById(R.id.canvas_view);
+
+        mChartFragment = new ChartFragment();
+        mRecyclerFragment = new RecyclerFragment();
+        getSupportFragmentManager().beginTransaction().setReorderingAllowed(true)
+                .add(R.id.fragment_container_view, mRecyclerFragment, null)
+                .commit();
+
+//        myCanvasView = findViewById(R.id.canvas_view);
 
         mScanTextView = findViewById(R.id.scan_text_view);
         mScanTextView.setOnClickListener(new View.OnClickListener() {
@@ -131,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(ChipGroup group, int checkedId) {
                 Chip checkedChip = findViewById(checkedId);
                 mRoomID = checkedChip.getText();
-                myCanvasView.setImage(checkedId-1);
+//                myCanvasView.setImage(checkedId-1);
                 Log.d(TAG, "Collecting room " + mRoomID + " data...");
             }
         });
@@ -146,11 +158,6 @@ public class MainActivity extends AppCompatActivity {
         mWifiScanReceiver = new WifiScanReceiver();
 
         mAccessPoints = new ArrayList<>();
-        mAdapter = new ScanAdapter(mAccessPoints);
-
-        mRecyclerView = findViewById(R.id.access_point_information_recycler_view);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
 
 
         mHandler = new Handler();
@@ -248,7 +255,8 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         registerReceiver(
                 mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        mAdapter.swapData(mAccessPoints);
+        mRecyclerFragment.update();
+//        mAdapter.swapData(mAccessPoints);
     }
 
     @Override
@@ -268,8 +276,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.action_fragment) {
+            if (mFragmentSwitch) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container_view, mRecyclerFragment)
+                        .commit();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container_view, mChartFragment)
+                        .commit();
+            }
 
-        if (id == R.id.action_settings) {
+            mFragmentSwitch = ! mFragmentSwitch;
+        } else if (id == R.id.action_settings) {
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle(R.string.pick_setting_item)
                     .setItems(R.array.items_array, new DialogInterface.OnClickListener() {
@@ -295,11 +314,11 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (mScanStarted) {
                 mAccessPoints = mWifiManager.getScanResults();
-                mAdapter.swapData(mAccessPoints);
-                mAdapter.notifyDataSetChanged();
+                mRecyclerFragment.update();
+//                mAdapter.swapData(mAccessPoints);
+//                mAdapter.notifyDataSetChanged();
                 logToUi(getString(R.string.stop_scan_info)
-                        + "\n" + mAccessPoints.size()
-                        + " APs discovered.\nCurrent scan delay: "
+                        + "\nCurrent scan delay: "
                         + (mInterval / 1000.0) + "s"
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
@@ -424,7 +443,6 @@ public class MainActivity extends AppCompatActivity {
 
         // show it
         alertDialog.show();
-
 
     }
 }

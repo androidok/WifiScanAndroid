@@ -3,6 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
     <item
+        android:id="@+id/action_fragment"
+        android:icon="@drawable/ic_action_info"
+        android:title="@string/action_fragment"
+        android:tooltipText="@string/action_fragment"
+        app:showAsAction="ifRoom|withText" />
+    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
         android:title="@string/action_settings"
@@ -12,6 +18,7 @@
         android:id="@+id/action_help"
         android:icon="@drawable/ic_action_help"
         android:title="@string/action_help"
-        android:tooltipText="@string/action_settings"
+        android:tooltipText="@string/action_help"
         app:showAsAction="ifRoom|withText" />
+
 </menu>
