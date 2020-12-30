@@ -20,7 +20,7 @@
     <string name="action_help">Help</string>
     <string name="dialog_positive">OK</string>
     <string name="dialog_negative">Cancel</string>
-    <string name="help_info">You can change the number of location IDs (default: 5) and the scan interval (default: 5s) in the settings. If you have other questions/concerns, please file the issue at https://github.com/miligithub/WifiScanAndroid/issues.</string>
+    <string name="help_info">You can change the number of location IDs (default: %1$d) and the scan interval (default: %2$.1f s) in the settings. If you have other questions/concerns, please file the issue at https://github.com/miligithub/WifiScanAndroid/issues.</string>
     <string name="pick_setting_item">What do you want to change?</string>
     <string name="setting_item_text">Item</string>
     <string name="setting_text_edit_hint">Enter the number here</string>

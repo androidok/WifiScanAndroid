@@ -265,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         if (id == R.id.action_draw) {
             if (!mRecyclerShown) {
-                logToUi("Let's draw");
+                // logToUi("Let's draw");
                 mChartFragment.setMode();
             }
         } else if (id == R.id.action_fragment) {
@@ -287,8 +287,9 @@ public class MainActivity extends AppCompatActivity {
                         changeSettingItem();
                     }).show();
         } else if (id == R.id.action_help) {
+            String message =  String.format(getString(R.string.help_info), mRoomNum, mInterval/1000.0);
             new AlertDialog.Builder(MainActivity.this)
-                    .setMessage(R.string.help_info)
+                    .setMessage(message)
                     .setPositiveButton(R.string.dialog_positive, null)
                     .show();
         }
