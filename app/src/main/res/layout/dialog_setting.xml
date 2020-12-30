@@ -22,11 +22,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/default_margin"
-        android:autofillHints=""
+        android:autofillHints="@string/setting_text_edit_hint"
         android:backgroundTint="@color/colorPrimaryVariant"
         android:gravity="center"
         android:hint="@string/setting_text_edit_hint"
-        android:inputType="number"
+        android:inputType="number|numberDecimal"
         android:labelFor="@id/setting_item_text_view"
         android:textCursorDrawable="@color/colorPrimaryVariant"
         android:textStyle="italic" />

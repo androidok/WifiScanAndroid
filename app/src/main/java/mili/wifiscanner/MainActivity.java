@@ -3,9 +3,6 @@ package mili.wifiscanner;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -56,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private static CharSequence mDataType = "unknown";
     private static int mRoomNum = 5;
     private static CharSequence mRoomID = "unknown";
-    private static int mUserInput = 0;
+    private static double mUserInput = 0;
     private static int mSettingID = -1;
 
     private WifiManager mWifiManager;
@@ -84,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ChartFragment mChartFragment;
     private RecyclerFragment mRecyclerFragment;
-    private boolean mFragmentSwitch = false;
+    private boolean mRecyclerShown = true;
 
 
     @Override
@@ -108,44 +105,33 @@ public class MainActivity extends AppCompatActivity {
 //        myCanvasView = findViewById(R.id.canvas_view);
 
         mScanTextView = findViewById(R.id.scan_text_view);
-        mScanTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!mScanStarted) {
-                    mScanStarted = !mScanStarted;
-                    Log.d(TAG, "Start scanning...");
-                    startWifiScanner();
-
-                } else {
-                    mScanStarted = !mScanStarted;
-                    Log.d(TAG, "Stop scanning...");
-                    stopWifiScanner();
-                }
+        mScanTextView.setOnClickListener(v -> {
+            mScanStarted = !mScanStarted;
+            if (mScanStarted) {
+                Log.d(TAG, "Start scanning...");
+                startWifiScanner();
+            } else {
+                Log.d(TAG, "Stop scanning...");
+                stopWifiScanner();
             }
         });
 
         mTypeToggle = findViewById(R.id.type_toggle);
-        mTypeToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-            @Override
-            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                Button checkedButton = findViewById(checkedId);
-                checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
-                mDataType = checkedButton.getText();
-                Log.d(TAG, "Collecting " + mDataType + " data...");
-            }
+        mTypeToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            Button checkedButton = findViewById(checkedId);
+            checkedButton.playSoundEffect(SoundEffectConstants.CLICK);
+            mDataType = checkedButton.getText();
+            Log.d(TAG, "Collecting " + mDataType + " data...");
         });
         mTypeToggle.check(R.id.train_button);
 
         mRoomToggle = findViewById(R.id.room_toggle);
         createRoomChips();
-        mRoomToggle.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(ChipGroup group, int checkedId) {
-                Chip checkedChip = findViewById(checkedId);
-                mRoomID = checkedChip.getText();
+        mRoomToggle.setOnCheckedChangeListener((group, checkedId) -> {
+            Chip checkedChip = findViewById(checkedId);
+            mRoomID = checkedChip.getText();
 //                myCanvasView.setImage(checkedId-1);
-                Log.d(TAG, "Collecting room " + mRoomID + " data...");
-            }
+            Log.d(TAG, "Collecting room " + mRoomID + " data...");
         });
 
         ActivityCompat.requestPermissions(
@@ -255,8 +241,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         registerReceiver(
                 mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        mRecyclerFragment.update();
-//        mAdapter.swapData(mAccessPoints);
+        if (mRecyclerShown) {
+            mRecyclerFragment.update();
+        }
     }
 
     @Override
@@ -277,25 +264,23 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_fragment) {
-            if (mFragmentSwitch) {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container_view, mRecyclerFragment)
-                        .commit();
-            } else {
+            if (mRecyclerShown) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container_view, mChartFragment)
                         .commit();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container_view, mRecyclerFragment)
+                        .commit();
             }
 
-            mFragmentSwitch = ! mFragmentSwitch;
+            mRecyclerShown = !mRecyclerShown;
         } else if (id == R.id.action_settings) {
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle(R.string.pick_setting_item)
-                    .setItems(R.array.items_array, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            mSettingID = which;
-                            changeSettingItem();
-                        }
+                    .setItems(R.array.items_array, (dialog, which) -> {
+                        mSettingID = which;
+                        changeSettingItem();
                     }).show();
         } else if (id == R.id.action_help) {
             new AlertDialog.Builder(MainActivity.this)
@@ -314,12 +299,12 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (mScanStarted) {
                 mAccessPoints = mWifiManager.getScanResults();
-                mRecyclerFragment.update();
-//                mAdapter.swapData(mAccessPoints);
-//                mAdapter.notifyDataSetChanged();
+                if (mRecyclerShown) {
+                    mRecyclerFragment.update();
+                }
                 logToUi(getString(R.string.stop_scan_info)
                         + "\nCurrent scan delay: "
-                        + (mInterval / 1000.0) + "s"
+                        + (mInterval / 1000.0) + " s"
                 );
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
 
@@ -412,31 +397,25 @@ public class MainActivity extends AppCompatActivity {
         alertDialogBuilder
                 .setCancelable(false)
                 .setPositiveButton(R.string.dialog_positive,
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                String input = userInput.getText().toString();
-                                if (input.isEmpty()) {
-                                    dialog.cancel();
-                                } else {
-                                    mUserInput = Integer.parseInt(input);
-                                    Log.d(TAG, "User Input Value: " + mUserInput);
-                                    if (mSettingID == 0) {
-                                        mRoomNum = mUserInput;
-                                        createRoomChips();
-                                    } else if (mSettingID == 1) {
-                                        mInterval = mUserInput * 1000;
-                                        mHandler.removeCallbacks(null);
-                                        Log.d(TAG, "User Input Value: " + mInterval);
-                                    }
+                        (dialog, id) -> {
+                            String input = userInput.getText().toString();
+                            if (input.isEmpty()) {
+                                dialog.cancel();
+                            } else {
+                                mUserInput = Double.parseDouble(input);
+                                Log.d(TAG, "User Input Value: " + mUserInput);
+                                if (mSettingID == 0) {
+                                    mRoomNum = (int) mUserInput;
+                                    createRoomChips();
+                                } else if (mSettingID == 1) {
+                                    mInterval = (int) (mUserInput * 1000);
+                                    mHandler.removeCallbacks(null);
+                                    Log.d(TAG, "User Input Value: " + mInterval);
                                 }
                             }
                         })
                 .setNegativeButton(R.string.dialog_negative,
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                            }
-                        });
+                        (dialog, id) -> dialog.cancel());
 
         // create alert dialog
         AlertDialog alertDialog = alertDialogBuilder.create();
