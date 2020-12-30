@@ -17,7 +17,8 @@
         android:id="@+id/chart"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/default_padding"
+        android:paddingVertical="@dimen/default_padding"
+        android:paddingEnd="@dimen/larger_padding"
         app:labelSeparation="10dp"
         app:labelTextSize="14sp"
         app:labelTextColor="#d000"
@@ -30,7 +31,8 @@
         app:exampleColor="@color/purple_200"
         app:exampleDimension="24sp"
         app:exampleDrawable="@android:drawable/ic_menu_add"
-        app:exampleString="Hello, MyChartView" />
+        app:exampleString="Hello, MyChartView"
+        tools:ignore="RtlSymmetry" />
 
 
 </FrameLayout>

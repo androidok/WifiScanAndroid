@@ -263,7 +263,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_fragment) {
+        if (id == R.id.action_draw) {
+            if (!mRecyclerShown) {
+                logToUi("Let's draw");
+                mChartFragment.setMode();
+            }
+        } else if (id == R.id.action_fragment) {
             if (mRecyclerShown) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container_view, mChartFragment)
@@ -273,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
                         .replace(R.id.fragment_container_view, mRecyclerFragment)
                         .commit();
             }
-
             mRecyclerShown = !mRecyclerShown;
         } else if (id == R.id.action_settings) {
             new AlertDialog.Builder(MainActivity.this)

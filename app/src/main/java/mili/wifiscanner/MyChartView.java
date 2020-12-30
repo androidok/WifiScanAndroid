@@ -1,19 +1,31 @@
+/*
+ * Copyright 2013 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package mili.wifiscanner;
 
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -25,10 +37,13 @@ import android.widget.OverScroller;
 
 import androidx.core.view.GestureDetectorCompat;
 import androidx.core.view.ViewCompat;
-import androidx.core.widget.EdgeEffectCompat;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * TODO: document your custom view class.
+ * A view representing a simple yet interactive line chart.
+ *
  */
 public class MyChartView extends View {
     private static final String TAG = "MyChartView";
@@ -52,10 +67,10 @@ public class MyChartView extends View {
     private static final float ZOOM_AMOUNT = 0.25f;
 
     // Viewport extremes. See mCurrentViewport for a discussion of the viewport.
-    private static final float AXIS_X_MIN = -1f;
-    private static final float AXIS_X_MAX = 1f;
-    private static final float AXIS_Y_MIN = -1f;
-    private static final float AXIS_Y_MAX = 1f;
+    private static final float AXIS_X_MIN = -3f;
+    private static final float AXIS_X_MAX = 3f;
+    private static final float AXIS_Y_MIN = -4f;
+    private static final float AXIS_Y_MAX = 4f;
 
     /**
      * The current viewport. This rectangle represents the currently visible chart domain
@@ -125,9 +140,12 @@ public class MyChartView extends View {
     private float[] mAxisYPositionsBuffer = new float[]{};
     private float[] mAxisXLinesBuffer = new float[]{};
     private float[] mAxisYLinesBuffer = new float[]{};
-    private float[] mSeriesLinesBuffer = new float[]{};
+    private float[] mSeriesLinesBuffer = null;
+    private List<Float> mSeriesData = new ArrayList<>();
     private final char[] mLabelBuffer = new char[100];
     private Point mSurfaceSizeBuffer = new Point();
+
+    private boolean mDrawMode;
 
     public MyChartView(Context context) {
         this(context, null, 0);
@@ -140,9 +158,8 @@ public class MyChartView extends View {
     public MyChartView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        // Load attributes
-        final TypedArray a = getContext().obtainStyledAttributes(
-                attrs, R.styleable.MyChartView, defStyle, 0);
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.MyChartView, defStyle, defStyle);
 
         try {
             mLabelTextColor = a.getColor(
@@ -166,7 +183,6 @@ public class MyChartView extends View {
                     R.styleable.MyChartView_dataThickness, mDataThickness);
             mDataColor = a.getColor(
                     R.styleable.MyChartView_dataColor, mDataColor);
-
         } finally {
             a.recycle();
         }
@@ -218,6 +234,11 @@ public class MyChartView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        mContentRect.set(
+                getPaddingLeft() + mMaxLabelWidth + mLabelSeparation,
+                getPaddingTop(),
+                getWidth() - getPaddingRight(),
+                getHeight() - getPaddingBottom() - mLabelHeight - mLabelSeparation);
     }
 
     @Override
@@ -251,8 +272,9 @@ public class MyChartView extends View {
         int clipRestoreCount = canvas.save();
         canvas.clipRect(mContentRect);
 
-        drawDataSeriesUnclipped(canvas);
         drawEdgeEffectsUnclipped(canvas);
+
+        drawDataSeriesUnclipped(canvas);
 
         // Removes clipping rectangle
         canvas.restoreToCount(clipRestoreCount);
@@ -260,7 +282,6 @@ public class MyChartView extends View {
         // Draws chart container
         canvas.drawRect(mContentRect, mAxisPaint);
     }
-
 
     /**
      * Draws the chart axes and labels onto the canvas.
@@ -361,7 +382,7 @@ public class MyChartView extends View {
         return shifted / magnitude;
     }
 
-    private static final int POW10[] = {1, 10, 100, 1000, 10000, 100000, 1000000};
+    private static final int[] POW10 = {1, 10, 100, 1000, 10000, 100000, 1000000};
 
     /**
      * Formats a float value to the given number of decimals. Returns the length of the string.
@@ -405,10 +426,10 @@ public class MyChartView extends View {
      * Computes the set of axis labels to show given start and stop boundaries and an ideal number
      * of stops between these boundaries.
      *
-     * @param start    The minimum extreme (e.g. the left edge) for the axis.
-     * @param stop     The maximum extreme (e.g. the right edge) for the axis.
-     * @param steps    The ideal number of stops to create. This should be based on available screen
-     *                 space; the more space there is, the more stops should be shown.
+     * @param start The minimum extreme (e.g. the left edge) for the axis.
+     * @param stop The maximum extreme (e.g. the right edge) for the axis.
+     * @param steps The ideal number of stops to create. This should be based on available screen
+     *              space; the more space there is, the more stops should be shown.
      * @param outStops The destination {@link AxisStops} object to populate.
      */
     private static void computeAxisStops(float start, float stop, int steps, AxisStops outStops) {
@@ -487,15 +508,34 @@ public class MyChartView extends View {
      */
     private float getRealY(float y) {
         return (mContentRect.bottom - y) * mCurrentViewport.height()
-                / mContentRect.height() + mCurrentViewport.left;
+                / mContentRect.height() + mCurrentViewport.top;
     }
 
     /**
-     * Draws the currently visible portion of the data series to the
-     * canvas. This method does not clip its drawing, so users should call {@link Canvas#clipRect
+     * Draws the currently visible portion of the data series to the canvas.
+     * This method does not clip its drawing, so users should call {@link Canvas#clipRect
      * before calling this method.
      */
     private void drawDataSeriesUnclipped(Canvas canvas) {
+        Log.d(TAG, mSeriesData.toString());
+        mSeriesLinesBuffer = new float[mSeriesData.size()];
+        for (int i=0; i<mSeriesData.size(); i+=2) {
+            mSeriesLinesBuffer[i] = getDrawX(mSeriesData.get(i));
+            mSeriesLinesBuffer[i+1] = getDrawY(mSeriesData.get(i+1));
+        }
+//        mSeriesLinesBuffer[0] = mContentRect.left;
+//        mSeriesLinesBuffer[1] = getDrawY(fun(mCurrentViewport.left));
+//        mSeriesLinesBuffer[2] = mSeriesLinesBuffer[0];
+//        mSeriesLinesBuffer[3] = mSeriesLinesBuffer[1];
+//        float x;
+//        for (int i = 1; i <= DRAW_STEPS; i++) {
+//            mSeriesLinesBuffer[i * 4 + 0] = mSeriesLinesBuffer[(i - 1) * 4 + 2];
+//            mSeriesLinesBuffer[i * 4 + 1] = mSeriesLinesBuffer[(i - 1) * 4 + 3];
+//
+//            x = (mCurrentViewport.left + (mCurrentViewport.width() / DRAW_STEPS * i));
+//            mSeriesLinesBuffer[i * 4 + 2] = getDrawX(x);
+//            mSeriesLinesBuffer[i * 4 + 3] = getDrawY(fun(x));
+//        }
         canvas.drawLines(mSeriesLinesBuffer, mDataPaint);
     }
 
@@ -503,11 +543,11 @@ public class MyChartView extends View {
      * Draws the overscroll "glow" at the four edges of the chart region, if necessary. The edges
      * of the chart region are stored in {@link #mContentRect}.
      *
-     * @see EdgeEffectCompat
+     * @see EdgeEffect
      */
     private void drawEdgeEffectsUnclipped(Canvas canvas) {
         // The methods below rotate and translate the canvas as needed before drawing the glow,
-        // since EdgeEffectCompat always draws a top-glow at 0,0.
+        // since EdgeEffect always draws a top-glow at 0,0.
 
         boolean needsInvalidate = false;
 
@@ -586,31 +626,57 @@ public class MyChartView extends View {
         return true;
     }
 
-
-    // The following methods factor out what happens for different touch events,
-    // as determined by the onTouchEvent() switch statement.
-    // This keeps the switch statement concise and easier
-    // to change what happens for each event.
-
-    private void touchStart(float x, float y) {
-        Log.d(TAG, x + " " + y + " " + getRealX(x) + " " + getRealY(y));
-    }
-
-    private void touchMove(float x, float y) {
-
-    }
-
-    private void touchUp() {
-
+    public void setMode() {
+        mDrawMode = !mDrawMode;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean retVal = mScaleGestureDetector.onTouchEvent(event);
-        retVal = mGestureDetector.onTouchEvent(event) || retVal;
-        Log.d(TAG, "retVal " + retVal);
-        return true;
+        if (mDrawMode) {
+            float x = event.getX();
+            float y = event.getY();
+            Log.d(TAG, x + " " + y + " " + mContentRect.left + " " + mCurrentViewport.left
+                    + " " + getRealX(x) + " " +  getRealY(y)
+                    + " " + getDrawX(getRealX(x)) + " " + getDrawY(getRealY(y)));
+            // Invalidate() is inside the case statements because there are many
+            // other types of motion events passed into this listener,
+            // and we don't want to invalidate the view for those.
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    touchStart(x, y);
+                    // No need to invalidate because we are not drawing anything.
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    touchMove(x, y);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    touchUp(x, y);
+                    invalidate();
+                    break;
+                default:
+                    // do nothing
+            }
+            return true;
+        } else {
+            boolean retVal = mScaleGestureDetector.onTouchEvent(event);
+            retVal = mGestureDetector.onTouchEvent(event) || retVal;
+            return retVal || super.onTouchEvent(event);
+        }
     }
+
+    private void touchUp(float x, float y) {
+        mSeriesData.add(getRealX(x));
+        mSeriesData.add(getRealY(y));
+    }
+
+    private void touchMove(float x, float y) {
+    }
+
+    private void touchStart(float x, float y) {
+        mSeriesData.add(getRealX(x));
+        mSeriesData.add(getRealY(y));
+    }
+
     /**
      * The scale listener, used for handling multi-finger scale gestures.
      */
@@ -633,7 +699,6 @@ public class MyChartView extends View {
 
         @Override
         public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-
             float spanX = scaleGestureDetector.getCurrentSpanX();
             float spanY = scaleGestureDetector.getCurrentSpanY();
 
@@ -1096,7 +1161,7 @@ public class MyChartView extends View {
     }
 
     /**
-     * Persistent state that is saved by InteractiveLineGraphView.
+     * Persistent state that is saved by MyChartView.
      */
     public static class SavedState extends BaseSavedState {
         private RectF viewport;
@@ -1116,13 +1181,13 @@ public class MyChartView extends View {
 
         @Override
         public String toString() {
-            return "InteractiveLineGraphView.SavedState{"
+            return "MyChartView.SavedState{"
                     + Integer.toHexString(System.identityHashCode(this))
                     + " viewport=" + viewport.toString() + "}";
         }
 
-        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
-
+        public static final Parcelable.Creator<SavedState> CREATOR
+                = new ClassLoaderCreator<SavedState>() {
             @Override
             public SavedState createFromParcel(Parcel source) {
                 return new SavedState(source);
@@ -1131,6 +1196,11 @@ public class MyChartView extends View {
             @Override
             public SavedState[] newArray(int size) {
                 return new SavedState[size];
+            }
+
+            @Override
+            public SavedState createFromParcel(Parcel source, ClassLoader loader) {
+                return new SavedState(source);
             }
         };
 

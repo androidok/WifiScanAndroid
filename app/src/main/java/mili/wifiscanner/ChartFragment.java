@@ -64,4 +64,9 @@ public class ChartFragment extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_chart, container, false);
     }
+
+    public void setMode() {
+        MyChartView chart = getActivity().findViewById(R.id.chart);
+        chart.setMode();
+    }
 }
