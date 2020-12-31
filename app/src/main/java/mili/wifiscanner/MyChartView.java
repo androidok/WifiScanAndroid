@@ -1220,4 +1220,8 @@ public class MyChartView extends View {
         int numStops;
         int decimals;
     }
+
+    public List<Float> getSeriesData() {
+        return mSeriesData;
+    }
 }

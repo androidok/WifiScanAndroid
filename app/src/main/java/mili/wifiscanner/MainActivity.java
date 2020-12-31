@@ -218,6 +218,10 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage(mDataWriter.info())
                         .setPositiveButton(R.string.dialog_positive, null)
                         .show();
+                if (!mRecyclerShown) {
+                    DataWriter pathWriter = new DataWriter("path",  getString(R.string.app_name));
+                    pathWriter.writePath(mChartFragment.getPath());
+                }
             }
             mHandler.post(mRunnable);
         }

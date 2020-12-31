@@ -9,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ChartFragment#newInstance} factory method to
@@ -68,5 +70,10 @@ public class ChartFragment extends Fragment {
     public void setMode() {
         MyChartView chart = getActivity().findViewById(R.id.chart);
         chart.setMode();
+    }
+
+    public List<Float> getPath() {
+        MyChartView chart = getActivity().findViewById(R.id.chart);
+        return chart.getSeriesData();
     }
 }

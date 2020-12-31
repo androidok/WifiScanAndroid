@@ -15,7 +15,7 @@ import java.util.List;
 
 public class DataWriter {
     private static String TAG = "DataWriter";
-    private static String mFilePath;
+    private String mFilePath;
     
     public DataWriter(CharSequence type, String folderName) {
         String rootPath = getRootPath(folderName + "/" + type);
@@ -56,6 +56,21 @@ public class DataWriter {
                 stringBuilder.append(i + " " + results.get(i).BSSID + " " + results.get(i).level + "\n");
             }
             stringBuilder.append("\n");
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(mFilePath, true));
+            outputStreamWriter.write(stringBuilder.toString());
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writePath(List<Float> path) {
+        try {
+            Log.d(TAG, "Write to " + mFilePath);
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Float f : path) {
+                stringBuilder.append(f + "\n");
+            }
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(mFilePath, true));
             outputStreamWriter.write(stringBuilder.toString());
             outputStreamWriter.close();
