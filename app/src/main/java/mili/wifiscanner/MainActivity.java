@@ -42,6 +42,7 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSION_CODE = 2;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MaterialButtonToggleGroup mTypeToggle;
     private ChipGroup mRoomToggle;
+    private Chip mUnknownChip;
     private static CharSequence mDataType = "unknown";
     private static int mRoomNum = 5;
     private static CharSequence mRoomID = "unknown";
@@ -277,10 +279,15 @@ public class MainActivity extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container_view, mChartFragment)
                         .commit();
+                mTypeToggle.setVisibility(View.GONE);
+                mRoomToggle.check(mUnknownChip.getId());
+                mRoomToggle.setVisibility(View.GONE);
             } else {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container_view, mRecyclerFragment)
                         .commit();
+                mTypeToggle.setVisibility(View.VISIBLE);
+                mRoomToggle.setVisibility(View.VISIBLE);
             }
             mRecyclerShown = !mRecyclerShown;
         } else if (id == R.id.action_settings) {
@@ -372,12 +379,18 @@ public class MainActivity extends AppCompatActivity {
                 mRoomToggle.removeView(currentChild);
             }
         }
-        for (int i = 0; i < mRoomNum; i++) {
+
+        for (int i = 1; i < mRoomNum+1; i++) {
             Chip chip = new Chip(mRoomToggle.getContext());
-            chip.setText(String.valueOf(i + 1));
+            chip.setText(String.valueOf(i));
             chip.setCheckable(true);
             mRoomToggle.addView(chip);
         }
+
+        mUnknownChip = new Chip(mRoomToggle.getContext());
+        mUnknownChip.setText("unknown");
+        mUnknownChip.setCheckable(true);
+        mRoomToggle.addView(mUnknownChip);
     }
 
     private void changeSettingItem() {

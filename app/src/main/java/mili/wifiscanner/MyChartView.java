@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -40,6 +41,11 @@ import androidx.core.view.ViewCompat;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.lang.Math.PI;
+import static java.lang.Math.atan2;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 /**
  * A view representing a simple yet interactive line chart.
@@ -282,6 +288,48 @@ public class MyChartView extends View {
         // Draws chart container
         canvas.drawRect(mContentRect, mAxisPaint);
     }
+    /**
+     * Draw an arrow
+     * change internal radius and angle to change appearance
+     * - angle : angle in degrees of the arrows legs
+     * - radius : length of the arrows legs
+     * @author Steven Roelants 2017
+     *
+     * @param paint
+     * @param canvas
+     * @param from_x
+     * @param from_y
+     * @param to_x
+     * @param to_y
+     */
+    private void drawArrow(Paint paint, Canvas canvas, float from_x, float from_y, float to_x, float to_y)
+    {
+        float angle,anglerad, radius, lineangle;
+
+        //values to change for other appearance *CHANGE THESE FOR OTHER SIZE ARROWHEADS*
+        radius=100;
+        angle=15;
+
+        //some angle calculations
+        anglerad= (float) (PI*angle/180.0f);
+        lineangle= (float) (atan2(to_y-from_y,to_x-from_x));
+
+        //tha line
+        canvas.drawLine(from_x,from_y,to_x,to_y,paint);
+
+        //tha triangle
+        Path path = new Path();
+        path.setFillType(Path.FillType.EVEN_ODD);
+        path.moveTo(to_x, to_y);
+        path.lineTo((float)(to_x-radius*cos(lineangle - (anglerad / 2.0))),
+                (float)(to_y-radius*sin(lineangle - (anglerad / 2.0))));
+        path.lineTo((float)(to_x-radius*cos(lineangle + (anglerad / 2.0))),
+                (float)(to_y-radius*sin(lineangle + (anglerad / 2.0))));
+        path.close();
+
+        canvas.drawPath(path, paint);
+    }
+
 
     /**
      * Draws the chart axes and labels onto the canvas.
@@ -536,7 +584,12 @@ public class MyChartView extends View {
 //            mSeriesLinesBuffer[i * 4 + 2] = getDrawX(x);
 //            mSeriesLinesBuffer[i * 4 + 3] = getDrawY(fun(x));
 //        }
-        canvas.drawLines(mSeriesLinesBuffer, mDataPaint);
+//        canvas.drawLines(mSeriesLinesBuffer, mDataPaint);
+
+        for (int i=0; i<mSeriesData.size(); i+=4) {
+            drawArrow(mDataPaint,canvas, mSeriesLinesBuffer[i], mSeriesLinesBuffer[i+1],mSeriesLinesBuffer[i+2],mSeriesLinesBuffer[i+3]);
+
+        }
     }
 
     /**

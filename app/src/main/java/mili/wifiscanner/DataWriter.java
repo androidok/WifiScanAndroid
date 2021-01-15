@@ -68,6 +68,7 @@ public class DataWriter {
         try {
             Log.d(TAG, "Write to " + mFilePath);
             StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(getTimeStamp() + "\n");
             for (Float f : path) {
                 stringBuilder.append(f + "\n");
             }

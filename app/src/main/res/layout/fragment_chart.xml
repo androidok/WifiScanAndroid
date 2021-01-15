@@ -13,26 +13,63 @@
 <!--        android:layout_height="match_parent"-->
 <!--        android:text="@string/hello_blank_fragment" />-->
 
-    <mili.wifiscanner.MyChartView
-        android:id="@+id/chart"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingVertical="@dimen/default_padding"
-        android:paddingEnd="@dimen/larger_padding"
-        app:labelSeparation="10dp"
-        app:labelTextSize="14sp"
-        app:labelTextColor="#d000"
-        app:axisThickness="2dp"
-        app:axisColor="#d000"
-        app:gridThickness="1dp"
-        app:gridColor="#2000"
-        app:dataColor="#a6c"
-        app:dataThickness="8dp"
-        app:exampleColor="@color/purple_200"
-        app:exampleDimension="24sp"
-        app:exampleDrawable="@android:drawable/ic_menu_add"
-        app:exampleString="Hello, MyChartView"
-        tools:ignore="RtlSymmetry" />
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/btn_undo"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_undo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btn_redo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_redo"
+            app:layout_constraintStart_toEndOf="@+id/btn_undo"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btn_reverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_reverse"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_redo"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <mili.wifiscanner.MyChartView
+            android:id="@+id/chart"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:paddingVertical="@dimen/default_padding"
+            android:paddingEnd="@dimen/larger_padding"
+            app:axisColor="#d000"
+            app:axisThickness="2dp"
+            app:dataColor="#a6c"
+            app:dataThickness="8dp"
+            app:exampleColor="@color/purple_200"
+            app:exampleDimension="24sp"
+            app:exampleDrawable="@android:drawable/ic_menu_add"
+            app:exampleString="Hello, MyChartView"
+            app:gridColor="#2000"
+            app:gridThickness="1dp"
+            app:labelSeparation="10dp"
+            app:labelTextColor="#d000"
+            app:labelTextSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btn_redo"
+            tools:ignore="RtlSymmetry" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 
 
 </FrameLayout>
