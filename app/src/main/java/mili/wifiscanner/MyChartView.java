@@ -19,6 +19,7 @@ package mili.wifiscanner;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -49,7 +50,6 @@ import static java.lang.Math.sin;
 
 /**
  * A view representing a simple yet interactive line chart.
- *
  */
 public class MyChartView extends View {
     private static final String TAG = "MyChartView";
@@ -77,6 +77,7 @@ public class MyChartView extends View {
     private static final float AXIS_X_MAX = 3f;
     private static final float AXIS_Y_MIN = -4f;
     private static final float AXIS_Y_MAX = 4f;
+    private static final float TOLERANCE = .02f;
 
     /**
      * The current viewport. This rectangle represents the currently visible chart domain
@@ -116,6 +117,7 @@ public class MyChartView extends View {
     private float mDataThickness;
     private int mDataColor;
     private Paint mDataPaint;
+    private Paint mLastDataPaint;
 
     // State objects and values related to gesture tracking.
     private ScaleGestureDetector mScaleGestureDetector;
@@ -151,7 +153,8 @@ public class MyChartView extends View {
     private final char[] mLabelBuffer = new char[100];
     private Point mSurfaceSizeBuffer = new Point();
 
-    private boolean mDrawMode;
+    private boolean mDrawMode = false;
+    private boolean mSelectMode = true;
 
     public MyChartView(Context context) {
         this(context, null, 0);
@@ -232,9 +235,15 @@ public class MyChartView extends View {
 
         mDataPaint = new Paint();
         mDataPaint.setStrokeWidth(mDataThickness);
-        mDataPaint.setColor(mDataColor);
+        mDataPaint.setColor(Color.BLACK);
         mDataPaint.setStyle(Paint.Style.STROKE);
         mDataPaint.setAntiAlias(true);
+
+        mLastDataPaint = new Paint();
+        mLastDataPaint.setStrokeWidth(mDataThickness);
+        mLastDataPaint.setColor(mDataColor);
+        mLastDataPaint.setStyle(Paint.Style.STROKE);
+        mLastDataPaint.setAntiAlias(true);
     }
 
     @Override
@@ -288,48 +297,6 @@ public class MyChartView extends View {
         // Draws chart container
         canvas.drawRect(mContentRect, mAxisPaint);
     }
-    /**
-     * Draw an arrow
-     * change internal radius and angle to change appearance
-     * - angle : angle in degrees of the arrows legs
-     * - radius : length of the arrows legs
-     * @author Steven Roelants 2017
-     *
-     * @param paint
-     * @param canvas
-     * @param from_x
-     * @param from_y
-     * @param to_x
-     * @param to_y
-     */
-    private void drawArrow(Paint paint, Canvas canvas, float from_x, float from_y, float to_x, float to_y)
-    {
-        float angle,anglerad, radius, lineangle;
-
-        //values to change for other appearance *CHANGE THESE FOR OTHER SIZE ARROWHEADS*
-        radius=100;
-        angle=15;
-
-        //some angle calculations
-        anglerad= (float) (PI*angle/180.0f);
-        lineangle= (float) (atan2(to_y-from_y,to_x-from_x));
-
-        //tha line
-        canvas.drawLine(from_x,from_y,to_x,to_y,paint);
-
-        //tha triangle
-        Path path = new Path();
-        path.setFillType(Path.FillType.EVEN_ODD);
-        path.moveTo(to_x, to_y);
-        path.lineTo((float)(to_x-radius*cos(lineangle - (anglerad / 2.0))),
-                (float)(to_y-radius*sin(lineangle - (anglerad / 2.0))));
-        path.lineTo((float)(to_x-radius*cos(lineangle + (anglerad / 2.0))),
-                (float)(to_y-radius*sin(lineangle + (anglerad / 2.0))));
-        path.close();
-
-        canvas.drawPath(path, paint);
-    }
-
 
     /**
      * Draws the chart axes and labels onto the canvas.
@@ -389,33 +356,33 @@ public class MyChartView extends View {
         }
         canvas.drawLines(mAxisYLinesBuffer, 0, mYStopsBuffer.numStops * 4, mGridPaint);
 
-        // Draws X labels
-        int labelOffset;
-        int labelLength;
-        mLabelTextPaint.setTextAlign(Paint.Align.CENTER);
-        for (i = 0; i < mXStopsBuffer.numStops; i++) {
-            // Do not use String.format in high-performance code such as onDraw code.
-            labelLength = formatFloat(mLabelBuffer, mXStopsBuffer.stops[i], mXStopsBuffer.decimals);
-            labelOffset = mLabelBuffer.length - labelLength;
-            canvas.drawText(
-                    mLabelBuffer, labelOffset, labelLength,
-                    mAxisXPositionsBuffer[i],
-                    mContentRect.bottom + mLabelHeight + mLabelSeparation,
-                    mLabelTextPaint);
-        }
-
-        // Draws Y labels
-        mLabelTextPaint.setTextAlign(Paint.Align.RIGHT);
-        for (i = 0; i < mYStopsBuffer.numStops; i++) {
-            // Do not use String.format in high-performance code such as onDraw code.
-            labelLength = formatFloat(mLabelBuffer, mYStopsBuffer.stops[i], mYStopsBuffer.decimals);
-            labelOffset = mLabelBuffer.length - labelLength;
-            canvas.drawText(
-                    mLabelBuffer, labelOffset, labelLength,
-                    mContentRect.left - mLabelSeparation,
-                    mAxisYPositionsBuffer[i] + mLabelHeight / 2,
-                    mLabelTextPaint);
-        }
+//        // Draws X labels
+//        int labelOffset;
+//        int labelLength;
+//        mLabelTextPaint.setTextAlign(Paint.Align.CENTER);
+//        for (i = 0; i < mXStopsBuffer.numStops; i++) {
+//            // Do not use String.format in high-performance code such as onDraw code.
+//            labelLength = formatFloat(mLabelBuffer, mXStopsBuffer.stops[i], mXStopsBuffer.decimals);
+//            labelOffset = mLabelBuffer.length - labelLength;
+//            canvas.drawText(
+//                    mLabelBuffer, labelOffset, labelLength,
+//                    mAxisXPositionsBuffer[i],
+//                    mContentRect.bottom + mLabelHeight + mLabelSeparation,
+//                    mLabelTextPaint);
+//        }
+//
+//        // Draws Y labels
+//        mLabelTextPaint.setTextAlign(Paint.Align.RIGHT);
+//        for (i = 0; i < mYStopsBuffer.numStops; i++) {
+//            // Do not use String.format in high-performance code such as onDraw code.
+//            labelLength = formatFloat(mLabelBuffer, mYStopsBuffer.stops[i], mYStopsBuffer.decimals);
+//            labelOffset = mLabelBuffer.length - labelLength;
+//            canvas.drawText(
+//                    mLabelBuffer, labelOffset, labelLength,
+//                    mContentRect.left - mLabelSeparation,
+//                    mAxisYPositionsBuffer[i] + mLabelHeight / 2,
+//                    mLabelTextPaint);
+//        }
     }
 
     /**
@@ -474,10 +441,10 @@ public class MyChartView extends View {
      * Computes the set of axis labels to show given start and stop boundaries and an ideal number
      * of stops between these boundaries.
      *
-     * @param start The minimum extreme (e.g. the left edge) for the axis.
-     * @param stop The maximum extreme (e.g. the right edge) for the axis.
-     * @param steps The ideal number of stops to create. This should be based on available screen
-     *              space; the more space there is, the more stops should be shown.
+     * @param start    The minimum extreme (e.g. the left edge) for the axis.
+     * @param stop     The maximum extreme (e.g. the right edge) for the axis.
+     * @param steps    The ideal number of stops to create. This should be based on available screen
+     *                 space; the more space there is, the more stops should be shown.
      * @param outStops The destination {@link AxisStops} object to populate.
      */
     private static void computeAxisStops(float start, float stop, int steps, AxisStops outStops) {
@@ -567,9 +534,9 @@ public class MyChartView extends View {
     private void drawDataSeriesUnclipped(Canvas canvas) {
         Log.d(TAG, mSeriesData.toString());
         mSeriesLinesBuffer = new float[mSeriesData.size()];
-        for (int i=0; i<mSeriesData.size(); i+=2) {
+        for (int i = 0; i < mSeriesData.size(); i += 2) {
             mSeriesLinesBuffer[i] = getDrawX(mSeriesData.get(i));
-            mSeriesLinesBuffer[i+1] = getDrawY(mSeriesData.get(i+1));
+            mSeriesLinesBuffer[i + 1] = getDrawY(mSeriesData.get(i + 1));
         }
 //        mSeriesLinesBuffer[0] = mContentRect.left;
 //        mSeriesLinesBuffer[1] = getDrawY(fun(mCurrentViewport.left));
@@ -585,12 +552,61 @@ public class MyChartView extends View {
 //            mSeriesLinesBuffer[i * 4 + 3] = getDrawY(fun(x));
 //        }
 //        canvas.drawLines(mSeriesLinesBuffer, mDataPaint);
-
-        for (int i=0; i<mSeriesData.size(); i+=4) {
-            drawArrow(mDataPaint,canvas, mSeriesLinesBuffer[i], mSeriesLinesBuffer[i+1],mSeriesLinesBuffer[i+2],mSeriesLinesBuffer[i+3]);
-
+        int i = 0;
+        for (; i < mSeriesData.size() - 4; i += 4) {
+            drawArrow(mDataPaint, canvas, mSeriesLinesBuffer[i],
+                    mSeriesLinesBuffer[i + 1], mSeriesLinesBuffer[i + 2],
+                    mSeriesLinesBuffer[i + 3]);
+        }
+        for (; i < mSeriesData.size(); i += 4) {
+            drawArrow(mLastDataPaint, canvas, mSeriesLinesBuffer[i],
+                    mSeriesLinesBuffer[i + 1], mSeriesLinesBuffer[i + 2],
+                    mSeriesLinesBuffer[i + 3]);
         }
     }
+
+
+    /**
+     * Draw an arrow
+     * change internal radius and angle to change appearance
+     * - angle : angle in degrees of the arrows legs
+     * - radius : length of the arrows legs
+     *
+     * @param paint
+     * @param canvas
+     * @param from_x
+     * @param from_y
+     * @param to_x
+     * @param to_y
+     * @author Steven Roelants 2017
+     */
+    private void drawArrow(Paint paint, Canvas canvas, float from_x, float from_y, float to_x, float to_y) {
+        float angle, anglerad, radius, lineangle;
+
+        //values to change for other appearance *CHANGE THESE FOR OTHER SIZE ARROWHEADS*
+        radius = 100;
+        angle = 15;
+
+        //some angle calculations
+        anglerad = (float) (PI * angle / 180.0f);
+        lineangle = (float) (atan2(to_y - from_y, to_x - from_x));
+
+        //tha line
+        canvas.drawLine(from_x, from_y, to_x, to_y, paint);
+
+        //tha triangle
+        Path path = new Path();
+        path.setFillType(Path.FillType.EVEN_ODD);
+        path.moveTo(to_x, to_y);
+        path.lineTo((float) (to_x - radius * cos(lineangle - (anglerad / 2.0))),
+                (float) (to_y - radius * sin(lineangle - (anglerad / 2.0))));
+        path.lineTo((float) (to_x - radius * cos(lineangle + (anglerad / 2.0))),
+                (float) (to_y - radius * sin(lineangle + (anglerad / 2.0))));
+        path.close();
+
+        canvas.drawPath(path, paint);
+    }
+
 
     /**
      * Draws the overscroll "glow" at the four edges of the chart region, if necessary. The edges
@@ -683,14 +699,34 @@ public class MyChartView extends View {
         mDrawMode = !mDrawMode;
     }
 
+    public void setMode(String mode) {
+        switch (mode) {
+            case "draw":
+                mDrawMode = true;
+                mSelectMode = false;
+                break;
+            case "view":
+                mDrawMode = false;
+                mSelectMode = false;
+                break;
+            case "select":
+                mDrawMode = true;
+                mSelectMode = true;
+                break;
+        }
+        Log.d(TAG, mode + " " + mDrawMode + " " + mSelectMode);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mDrawMode) {
             float x = event.getX();
             float y = event.getY();
             Log.d(TAG, x + " " + y + " " + mContentRect.left + " " + mCurrentViewport.left
-                    + " " + getRealX(x) + " " +  getRealY(y)
+                    + " " + getRealX(x) + " " + getRealY(y)
                     + " " + getDrawX(getRealX(x)) + " " + getDrawY(getRealY(y)));
+
+
             // Invalidate() is inside the case statements because there are many
             // other types of motion events passed into this listener,
             // and we don't want to invalidate the view for those.
@@ -709,6 +745,7 @@ public class MyChartView extends View {
                 default:
                     // do nothing
             }
+
             return true;
         } else {
             boolean retVal = mScaleGestureDetector.onTouchEvent(event);
@@ -718,16 +755,44 @@ public class MyChartView extends View {
     }
 
     private void touchUp(float x, float y) {
-        mSeriesData.add(getRealX(x));
-        mSeriesData.add(getRealY(y));
+        if (mSelectMode) {
+
+        } else {
+            mSeriesData.add(getRealX(x));
+            mSeriesData.add(getRealY(y));
+        }
     }
 
     private void touchMove(float x, float y) {
     }
 
+    private float getDistance(float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt((y2 - y1)*(y2 - y1) + (x2 - x1) * (x2-x1));
+    }
     private void touchStart(float x, float y) {
-        mSeriesData.add(getRealX(x));
-        mSeriesData.add(getRealY(y));
+        if (mSelectMode) {
+            float x3 = getRealX(x);
+            float y3 = getRealY(y);
+            for (int i=0; i<mSeriesData.size(); i += 4) {
+                float x1 = mSeriesData.get(i), y1 = mSeriesData.get(i+1),
+                        x2 = mSeriesData.get(i+2), y2 = mSeriesData.get(i+3);
+                float distance =  getDistance(x1,y1,x3,y3) + getDistance(x2,y2,x3,y3) - getDistance(x1,y1,x2,y2);
+                Log.d(TAG, i + " " + distance);
+                if ( distance < TOLERANCE) {
+                    mSeriesData.add(mSeriesData.get(i));
+                    mSeriesData.add(mSeriesData.get(i+1));
+                    mSeriesData.add(mSeriesData.get(i+2));
+                    mSeriesData.add(mSeriesData.get(i+3));
+                    for (int j=0; j<4; j++) {
+                        mSeriesData.remove(i);
+                    }
+                    break;
+                }
+            }
+        } else {
+            mSeriesData.add(getRealX(x));
+            mSeriesData.add(getRealY(y));
+        }
     }
 
     /**
@@ -1277,4 +1342,26 @@ public class MyChartView extends View {
     public List<Float> getSeriesData() {
         return mSeriesData;
     }
+
+    public void undo() {
+        int size = mSeriesData.size();
+        if (size > 0) {
+            for (int i = 0; i < 4; i++) {
+                mSeriesData.remove(size - 1 - i);
+            }
+        }
+        invalidate();
+    }
+
+    public void reverse() {
+        int size = mSeriesData.size();
+        if (size > 0) {
+            mSeriesData.add(mSeriesData.get(size - 2));
+            mSeriesData.add(mSeriesData.get(size - 1));
+            mSeriesData.add(mSeriesData.get(size - 4));
+            mSeriesData.add(mSeriesData.get(size - 3));
+        }
+        invalidate();
+    }
+
 }

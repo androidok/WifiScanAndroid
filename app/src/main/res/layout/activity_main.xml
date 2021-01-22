@@ -13,7 +13,7 @@
     <LinearLayout
         android:id="@+id/linear_layout"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
@@ -64,15 +64,20 @@
                 android:text="@string/location_toggle_text" />
         </com.google.android.material.chip.ChipGroup>
 
+        <Button
+            android:id="@+id/scan_button"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/start_scan_info" />
+
         <TextView
             android:id="@+id/scan_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/larger_margin"
-            android:text="@string/start_scan_info"
+            android:text="@string/hint_scan_info"
             android:textColor="@color/colorPrimary"
-            android:textColorHighlight="@color/colorSecondaryVariant"
-            android:textSize="@dimen/larger_text_size" />
+            android:textColorHighlight="@color/colorSecondaryVariant" />
 
     </LinearLayout>
 

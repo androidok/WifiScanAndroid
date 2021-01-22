@@ -2,12 +2,19 @@ package mili.wifiscanner;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,6 +34,9 @@ public class ChartFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private MyChartView mChartView;
+    private ChipGroup mChipGroup;
 
     public ChartFragment() {
         // Required empty public constructor
@@ -61,6 +71,72 @@ public class ChartFragment extends Fragment {
     }
 
     @Override
+    public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mChartView = getActivity().findViewById(R.id.chart);
+//        mChipGroup = getView().findViewById(R.id.chart_chip_group);
+//        mChipGroup.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(ChipGroup group, int checkedId) {
+//                switch (checkedId) {
+//                    case R.id.chip_view:
+//                        mChartView.setMode();
+//                        break;
+//                    case R.id.chip_draw:
+//                        mChartView.setMode();
+//                        break;
+//                    case R.id.chip_select:
+//                        break;
+//                    case R.id.chip_reverse:
+//                        mChartView.reverse();
+//                        break;
+//                    case R.id.chip_delete:
+//                        mChartView.undo();
+//                        break;
+//                }
+//                mChipGroup.clearCheck();
+//            }
+//        });
+        Chip chipDraw = getView().findViewById(R.id.chip_draw);
+        chipDraw.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mChartView.setMode("draw");
+            }
+        });
+        Chip chipView = getView().findViewById(R.id.chip_view);
+        chipView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mChartView.setMode("view");
+            }
+        });
+        Chip chipSelect = getView().findViewById(R.id.chip_select);
+        chipSelect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mChartView.setMode("select");
+            }
+        });
+        Chip chipUndo = getView().findViewById(R.id.chip_delete);
+        chipUndo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mChartView.undo();
+            }
+        });
+
+        Chip chipReverse = getView().findViewById(R.id.chip_reverse);
+        chipReverse.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mChartView.reverse();
+            }
+        });
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -68,12 +144,10 @@ public class ChartFragment extends Fragment {
     }
 
     public void setMode() {
-        MyChartView chart = getActivity().findViewById(R.id.chart);
-        chart.setMode();
+        mChartView.reverse();
     }
 
     public List<Float> getPath() {
-        MyChartView chart = getActivity().findViewById(R.id.chart);
-        return chart.getSeriesData();
+        return mChartView.getSeriesData();
     }
 }

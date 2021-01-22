@@ -17,31 +17,54 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/btn_undo"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chart_chip_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/btn_undo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
-            android:id="@+id/btn_redo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_redo"
-            app:layout_constraintStart_toEndOf="@+id/btn_undo"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
-            android:id="@+id/btn_reverse"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_reverse"
+            android:layout_margin="@dimen/larger_margin"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btn_redo"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:checked="true"
+                android:text="@string/chip_view" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_draw"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="@string/chip_draw" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="@string/chip_select" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_reverse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="@string/chip_reverse" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="@string/chip_delete" />
+        </com.google.android.material.chip.ChipGroup>
+
 
         <mili.wifiscanner.MyChartView
             android:id="@+id/chart"
@@ -62,10 +85,10 @@
             app:labelSeparation="10dp"
             app:labelTextColor="#d000"
             app:labelTextSize="14sp"
+            app:layout_constraintTop_toBottomOf="@+id/chart_chip_group"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btn_redo"
             tools:ignore="RtlSymmetry" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

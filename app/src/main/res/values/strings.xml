@@ -2,9 +2,10 @@
     <string name="app_name">WifiScanner</string>
 
     <!--    MainActivity    -->
-    <string name="start_scan_info">Touch here to scan wifi&#8230;</string>
+    <string name="start_scan_info">START</string>
+    <string name="hint_scan_info"></string>
     <string name="retrieving_access_points">Retrieving Access Points&#8230;</string>
-    <string name="stop_scan_info">Touch here to STOP&#8230;</string>
+    <string name="stop_scan_info">PAUSE</string>
     <string name="recycler_row_header_label_bssid">BSSID</string>
     <string name="recycler_row_header_label_rssi">RSSI</string>
     <string name="type_text">DataType</string>
@@ -30,8 +31,17 @@
     </array>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="chip_draw">Draw</string>
+    <string name="chip_view">View</string>
+    <string name="chip_undo">Delete</string>
+    <string name="chip_redo">Redo</string>
+    <string name="chip_reverse">Reverse</string>
+    <string name="chip_select">Select</string>
+    <string name="chip_delete">Delete</string>
     <string name="action_draw">Draw</string>
-    <string name="btn_undo">Undo</string>
+    <string name="btn_undo">Delete</string>
     <string name="btn_redo">Redo</string>
     <string name="btn_reverse">Reverse</string>
+    <string name="btn_draw">Draw</string>
+    <string name="btn_select">Select</string>
 </resources>

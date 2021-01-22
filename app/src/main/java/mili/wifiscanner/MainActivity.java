@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_CODE = 2;
 
     private TextView mScanTextView;
+    private Button mScanButton;
 
     private MaterialButtonToggleGroup mTypeToggle;
     private ChipGroup mRoomToggle;
@@ -61,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
     private WifiManager mWifiManager;
     private WifiScanReceiver mWifiScanReceiver;
     public List<ScanResult> mAccessPoints;
-
     private Handler mHandler;
     private Runnable mRunnable;
     private static int mInterval = 5000; // 1000 milliseconds == 1 second
@@ -104,19 +104,21 @@ public class MainActivity extends AppCompatActivity {
                 .add(R.id.fragment_container_view, mRecyclerFragment, null)
                 .commit();
 
-//        myCanvasView = findViewById(R.id.canvas_view);
-
-        mScanTextView = findViewById(R.id.scan_text_view);
-        mScanTextView.setOnClickListener(v -> {
+        mScanButton = findViewById(R.id.scan_button);
+        mScanButton.setOnClickListener(v -> {
             mScanStarted = !mScanStarted;
             if (mScanStarted) {
                 Log.d(TAG, "Start scanning...");
+                mScanButton.setText(getString(R.string.stop_scan_info));
                 startWifiScanner();
             } else {
                 Log.d(TAG, "Stop scanning...");
+                mScanButton.setText(getString(R.string.start_scan_info));
                 stopWifiScanner();
             }
         });
+
+        mScanTextView = findViewById(R.id.scan_text_view);
 
         mTypeToggle = findViewById(R.id.type_toggle);
         mTypeToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -153,8 +155,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (mScanStarted) {
                     Log.d(TAG, "Scan once...");
-                    logToUi(mAccessPoints.size()
-                            + " APs discovered.\n" + getString(R.string.retrieving_access_points));
+                    logToUi(getString(R.string.retrieving_access_points) + "\n"
+                            + mAccessPoints.size() + " APs discovered.\n");
                     mWifiManager.startScan();
                     mHandler.postDelayed(this, mInterval);
                 } else {
@@ -162,7 +164,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-
 
 
         mSortedBssid = getResources().getStringArray(R.array.sorted_bssid);
@@ -205,23 +206,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private void startWifiScanner() {
         if (mRoomToggle.getCheckedChipId() == ChipGroup.NO_ID) {
             new AlertDialog.Builder(MainActivity.this)
                     .setMessage(R.string.start_warning)
                     .setPositiveButton(R.string.dialog_positive, null)
                     .show();
-            mScanTextView.callOnClick();
+            mScanButton.callOnClick();
         } else {
             mDataWriter = new DataWriter(mDataType, getString(R.string.app_name));
             if (mDataType == getString(R.string.train_text)) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setMessage(mDataWriter.info())
-                        .setPositiveButton(R.string.dialog_positive, null)
-                        .show();
+                Toast.makeText(getApplicationContext(),mDataWriter.info(),Toast.LENGTH_SHORT).show();
+//                new AlertDialog.Builder(MainActivity.this)
+//                        .setMessage(mDataWriter.info())
+//                        .setPositiveButton(R.string.dialog_positive, null)
+//                        .show();
                 if (!mRecyclerShown) {
-                    DataWriter pathWriter = new DataWriter("path",  getString(R.string.app_name));
+                    DataWriter pathWriter = new DataWriter("path", getString(R.string.app_name));
                     pathWriter.writePath(mChartFragment.getPath());
                 }
             }
@@ -231,14 +232,17 @@ public class MainActivity extends AppCompatActivity {
 
     void stopWifiScanner() {
         mHandler.removeCallbacks(null);
-        logToUi(getString(R.string.start_scan_info));
         Log.d(TAG, "Scan stopped");
+        if (!mRecyclerShown) {
+
+            mChartFragment.setMode();
+        }
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mScanTextView.setText(savedInstanceState.getCharSequence("MyViewText"));
+        //mScanTextView.setText(savedInstanceState.getCharSequence("MyViewText"));
     }
 
     @Override
@@ -269,12 +273,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_draw) {
-            if (!mRecyclerShown) {
-                // logToUi("Let's draw");
-                mChartFragment.setMode();
-            }
-        } else if (id == R.id.action_fragment) {
+        if (id == R.id.action_fragment) {
             if (mRecyclerShown) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container_view, mChartFragment)
@@ -298,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                         changeSettingItem();
                     }).show();
         } else if (id == R.id.action_help) {
-            String message =  String.format(getString(R.string.help_info), mRoomNum, mInterval/1000.0);
+            String message = String.format(getString(R.string.help_info), mRoomNum, mInterval / 1000.0);
             new AlertDialog.Builder(MainActivity.this)
                     .setMessage(message)
                     .setPositiveButton(R.string.dialog_positive, null)
@@ -309,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private class WifiScanReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -318,17 +316,15 @@ public class MainActivity extends AppCompatActivity {
                 if (mRecyclerShown) {
                     mRecyclerFragment.update();
                 }
-                logToUi(getString(R.string.stop_scan_info)
-                        + "\nCurrent scan delay: "
-                        + (mInterval / 1000.0) + " s"
-                );
+                logToUi("Current scan delay: " + (mInterval / 1000.0) + " s\n"
+                        + mAccessPoints.size() + " APs discovered.\n");
                 mDataWriter.writeToFiles(mRoomID, mAccessPoints);
 
                 if (mDataType.equals(getString(R.string.test_text)) && mPredictMode) {
                     mRSSI = new int[mSortedBssid.length];
-                    for (int i = 0; i<mRSSI.length; i++) {
+                    for (int i = 0; i < mRSSI.length; i++) {
                         mRSSI[i] = mMinRSSI;
-                        for (int j = 0; j<mAccessPoints.size(); j++) {
+                        for (int j = 0; j < mAccessPoints.size(); j++) {
                             if (mSortedBssid[i].equals(mAccessPoints.get(j).BSSID)) {
                                 mRSSI[i] = mAccessPoints.get(j).level;
                                 break;
@@ -337,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     DenseInstance newInstance = new DenseInstance(mDataUnpredicted.numAttributes()) {
                         {
-                            int i= 0;
+                            int i = 0;
                             for (String bssid : mSortedBssid) {
                                 setValue(mDataUnpredicted.attribute(bssid), mRSSI[i]);
                                 i++;
@@ -380,7 +376,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        for (int i = 1; i < mRoomNum+1; i++) {
+        for (int i = 1; i < mRoomNum + 1; i++) {
             Chip chip = new Chip(mRoomToggle.getContext());
             chip.setText(String.valueOf(i));
             chip.setCheckable(true);
@@ -391,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
         mUnknownChip.setText("unknown");
         mUnknownChip.setCheckable(true);
         mRoomToggle.addView(mUnknownChip);
+        mUnknownChip.setVisibility(View.GONE);
     }
 
     private void changeSettingItem() {
